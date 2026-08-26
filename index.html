@@ -207,15 +207,6 @@
             color: white;
         }
         
-        .btn-danger {
-            background: #ef4444;
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background: #dc2626;
-        }
-        
         .btn-sm {
             padding: 8px 16px;
             font-size: 13px;
@@ -304,46 +295,6 @@
             border-top: 1px solid #e2e8f0;
             font-size: 12px;
             color: #94a3b8;
-        }
-        
-        .footer a {
-            color: #002b54;
-            text-decoration: none;
-        }
-        
-        .quick-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-        
-        .quick-actions .btn {
-            font-size: 12px;
-            padding: 6px 14px;
-        }
-        
-        .invoice-preview {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f1f5f9;
-            border-radius: 8px;
-            display: none;
-        }
-        
-        .invoice-preview.show {
-            display: block;
-        }
-        
-        .invoice-preview pre {
-            font-size: 12px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            max-height: 400px;
-            overflow: auto;
-            background: white;
-            padding: 15px;
-            border-radius: 6px;
         }
         
         .help-section {
@@ -468,45 +419,19 @@
                     <button type="button" class="btn btn-outline" onclick="checkExisting()">
                         🔍 Check Existing Invoices
                     </button>
-                    <button type="button" class="btn btn-success" onclick="viewInvoice()" id="viewBtn" style="display:none;">
-                        👁️ View Invoice Data
-                    </button>
                 </div>
             </form>
             
             <!-- Loading -->
             <div id="loading" class="loading">
                 <div class="spinner"></div>
-                <p style="margin-top:10px;color:#64748b;">Generating your invoice...</p>
+                <p style="margin-top:10px;color:#64748b;">Processing your request...</p>
             </div>
             
             <!-- Existing Invoices -->
             <div id="existingInvoices" class="existing-invoices">
                 <h4>📋 Existing Invoices</h4>
                 <div id="invoiceList"></div>
-            </div>
-            
-            <!-- Invoice Preview -->
-            <div id="invoicePreview" class="invoice-preview">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:10px;">
-                    <strong style="color:#002b54;">Invoice Data Preview</strong>
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                        <button class="btn btn-sm btn-success" onclick="downloadPDF()">📥 Download PDF</button>
-                        <button class="btn btn-sm btn-outline" onclick="closePreview()">✕ Close</button>
-                    </div>
-                </div>
-                <pre id="previewContent"></pre>
-            </div>
-            
-            <!-- Quick Actions -->
-            <div class="divider"></div>
-            <div>
-                <h4 style="font-size:14px;color:#1e293b;margin-bottom:10px;">⚡ Quick Actions</h4>
-                <div class="quick-actions">
-                    <button class="btn btn-sm btn-outline" onclick="loadClasses()">🔄 Refresh Classes</button>
-                    <button class="btn btn-sm btn-outline" onclick="clearForm()">🗑️ Clear Form</button>
-                    <button class="btn btn-sm btn-outline" onclick="window.print()">🖨️ Print This Page</button>
-                </div>
             </div>
             
             <!-- Help Section -->
@@ -533,10 +458,17 @@
     
     <script>
         // ============================================
+        // CONFIGURATION
+        // ============================================
+        
+        // IMPORTANT: Replace with your actual Google Apps Script URL
+        // This is the URL from your deployed web app
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxFcGYfxd80d2-fDL7FuKglFxsdbrtUz2x685C8Kcs5i1Qmg6_vgIEZMRrY741_-ASIAg/exec';
+        
+        // ============================================
         // GLOBAL STATE
         // ============================================
         
-        let currentInvoiceData = null;
         let currentPDFBase64 = null;
         let currentFileName = null;
         let isGenerating = false;
@@ -550,7 +482,6 @@
             alert.className = 'alert alert-' + type + ' show';
             alert.textContent = message;
             
-            // Auto-hide after 10 seconds
             clearTimeout(alert._timeout);
             alert._timeout = setTimeout(function() {
                 alert.className = 'alert';
@@ -575,17 +506,9 @@
             document.getElementById('dateOfBirth').value = '';
             document.getElementById('requestedBy').value = 'Parent/Guardian';
             document.getElementById('existingInvoices').className = 'existing-invoices';
-            document.getElementById('invoicePreview').className = 'invoice-preview';
-            document.getElementById('viewBtn').style.display = 'none';
             hideAlert();
-            currentInvoiceData = null;
-            currentPDFBase64 = null;
             document.getElementById('generateBtn').disabled = false;
             document.getElementById('generateBtn').innerHTML = '📄 Generate & Download Invoice';
-        }
-        
-        function closePreview() {
-            document.getElementById('invoicePreview').className = 'invoice-preview';
         }
         
         // ============================================
@@ -593,47 +516,41 @@
         // ============================================
         
         function callApi(action, params, successCallback, errorCallback) {
-            // For Google Apps Script web app
-            if (window.google && google.script && google.script.run) {
-                google.script.run
-                    .withSuccessHandler(function(result) {
-                        if (successCallback) successCallback(result);
-                    })
-                    .withFailureHandler(function(error) {
-                        if (errorCallback) {
-                            errorCallback(error);
-                        } else {
-                            showAlert('Error: ' + error, 'error');
-                        }
-                    })
-                    [action](params);
-                return;
+            var data = { action: action };
+            for (var key in params) {
+                if (params.hasOwnProperty(key)) {
+                    data[key] = params[key];
+                }
             }
             
-            // Fallback: Use fetch for standalone deployment
-            var queryString = Object.keys(params).map(function(key) {
-                return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
+            var queryString = Object.keys(data).map(function(key) {
+                return encodeURIComponent(key) + '=' + encodeURIComponent(data[key]);
             }).join('&');
             
-            var fullUrl = window.location.href.split('?')[0] + '?action=' + action + '&' + queryString;
+            var fullUrl = GAS_WEB_APP_URL + '?' + queryString;
             
-            fetch(fullUrl)
-                .then(function(response) {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(function(result) {
-                    if (successCallback) successCallback(result);
-                })
-                .catch(function(error) {
-                    if (errorCallback) {
-                        errorCallback(error);
-                    } else {
-                        showAlert('Error: ' + error.message, 'error');
-                    }
-                });
+            fetch(fullUrl, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(function(result) {
+                if (successCallback) successCallback(result);
+            })
+            .catch(function(error) {
+                if (errorCallback) {
+                    errorCallback(error);
+                } else {
+                    showAlert('Error: ' + error.message, 'error');
+                }
+            });
         }
         
         // ============================================
@@ -641,7 +558,9 @@
         // ============================================
         
         function loadClasses() {
+            showLoading();
             callApi('getClasses', {}, function(result) {
+                hideLoading();
                 var select = document.getElementById('studentClass');
                 select.innerHTML = '<option value="">Select Class...</option>';
                 
@@ -656,6 +575,7 @@
                     showAlert('Failed to load classes', 'error');
                 }
             }, function(error) {
+                hideLoading();
                 showAlert('Error loading classes: ' + error, 'error');
             });
         }
@@ -748,10 +668,33 @@
             callApi('getInvoiceByNumber', { invoiceNumber: invoiceNumber }, function(result) {
                 hideLoading();
                 if (result.success && result.invoice) {
+                    var inv = result.invoice;
                     // Generate PDF from the invoice data
-                    generatePDFFromData(result.invoice);
+                    generatePDFFromData(inv);
                 } else {
                     showAlert('Error retrieving invoice: ' + (result.error || 'Unknown error'), 'error');
+                }
+            }, function(error) {
+                hideLoading();
+                showAlert('Error: ' + error, 'error');
+            });
+        }
+        
+        function generatePDFFromData(invoiceData) {
+            showLoading();
+            callApi('getInvoicePDF', {
+                studentName: invoiceData.studentName,
+                studentClass: invoiceData.studentClass,
+                dateOfBirth: invoiceData.dateOfBirth || ''
+            }, function(result) {
+                hideLoading();
+                if (result.success && result.pdfBase64) {
+                    currentPDFBase64 = result.pdfBase64;
+                    currentFileName = result.fileName || 'invoice.pdf';
+                    downloadPDF();
+                    showAlert('PDF downloaded successfully!', 'success');
+                } else {
+                    showAlert('Error generating PDF: ' + (result.error || 'Unknown error'), 'error');
                 }
             }, function(error) {
                 hideLoading();
@@ -790,11 +733,28 @@
                 requestedBy: requestedBy
             }, function(result) {
                 if (result.success) {
-                    currentInvoiceData = result.invoice;
                     showAlert('Invoice generated successfully: ' + result.invoice.invoiceNumber, 'success');
                     
                     // Step 2: Generate PDF
-                    generatePDF(studentName, studentClass, dateOfBirth);
+                    callApi('getInvoicePDF', {
+                        studentName: studentName,
+                        studentClass: studentClass,
+                        dateOfBirth: dateOfBirth
+                    }, function(pdfResult) {
+                        hideLoading();
+                        isGenerating = false;
+                        document.getElementById('generateBtn').disabled = false;
+                        document.getElementById('generateBtn').innerHTML = '📄 Generate & Download Invoice';
+                        
+                        if (pdfResult.success && pdfResult.pdfBase64) {
+                            currentPDFBase64 = pdfResult.pdfBase64;
+                            currentFileName = pdfResult.fileName || 'invoice.pdf';
+                            downloadPDF();
+                            showAlert('PDF downloaded successfully!', 'success');
+                        } else {
+                            showAlert('Failed to generate PDF: ' + (pdfResult.error || 'Unknown error'), 'error');
+                        }
+                    });
                 } else {
                     hideLoading();
                     isGenerating = false;
@@ -832,58 +792,6 @@
             });
         }
         
-        function generatePDF(studentName, studentClass, dateOfBirth) {
-            callApi('getInvoicePDF', {
-                studentName: studentName,
-                studentClass: studentClass,
-                dateOfBirth: dateOfBirth
-            }, function(result) {
-                hideLoading();
-                isGenerating = false;
-                document.getElementById('generateBtn').disabled = false;
-                document.getElementById('generateBtn').innerHTML = '📄 Generate & Download Invoice';
-                
-                if (result.success && result.pdfBase64) {
-                    currentPDFBase64 = result.pdfBase64;
-                    currentFileName = result.fileName || 'invoice.pdf';
-                    downloadPDF();
-                    showAlert('PDF generated successfully!', 'success');
-                    document.getElementById('viewBtn').style.display = 'inline-flex';
-                } else {
-                    showAlert('Failed to generate PDF: ' + (result.error || 'Unknown error'), 'error');
-                }
-            }, function(error) {
-                hideLoading();
-                isGenerating = false;
-                document.getElementById('generateBtn').disabled = false;
-                document.getElementById('generateBtn').innerHTML = '📄 Generate & Download Invoice';
-                showAlert('Error generating PDF: ' + error, 'error');
-            });
-        }
-        
-        function generatePDFFromData(invoiceData) {
-            // This is a fallback - in production, the server should generate the PDF
-            // For now, we'll use the existing PDF generation
-            callApi('getInvoicePDF', {
-                studentName: invoiceData.studentName,
-                studentClass: invoiceData.studentClass,
-                dateOfBirth: invoiceData.dateOfBirth || ''
-            }, function(result) {
-                hideLoading();
-                if (result.success && result.pdfBase64) {
-                    currentPDFBase64 = result.pdfBase64;
-                    currentFileName = result.fileName || 'invoice.pdf';
-                    downloadPDF();
-                    showAlert('PDF downloaded successfully!', 'success');
-                } else {
-                    showAlert('Error generating PDF: ' + (result.error || 'Unknown error'), 'error');
-                }
-            }, function(error) {
-                hideLoading();
-                showAlert('Error: ' + error, 'error');
-            });
-        }
-        
         function downloadPDF() {
             if (!currentPDFBase64) {
                 showAlert('No PDF available. Please generate an invoice first.', 'error');
@@ -896,19 +804,6 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-        }
-        
-        function viewInvoice() {
-            if (!currentInvoiceData) {
-                showAlert('No invoice data available. Please generate an invoice first.', 'error');
-                return;
-            }
-            
-            var preview = document.getElementById('invoicePreview');
-            var content = document.getElementById('previewContent');
-            content.textContent = JSON.stringify(currentInvoiceData, null, 2);
-            preview.className = 'invoice-preview show';
-            document.getElementById('viewBtn').style.display = 'inline-flex';
         }
         
         // ============================================
@@ -936,9 +831,7 @@
         window.checkExisting = checkExisting;
         window.generateAndDownload = generateAndDownload;
         window.downloadPDF = downloadPDF;
-        window.viewInvoice = viewInvoice;
         window.clearForm = clearForm;
-        window.closePreview = closePreview;
         window.downloadExistingInvoice = downloadExistingInvoice;
     </script>
 </body>
