@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lunzu Secondary School - Invoice Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #002b54 0%, #003d7a 100%);
+            color: white;
+            padding: 30px 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+        
+        .header .badge {
+            display: inline-block;
+            background: #fbbf24;
+            color: #002b54;
+            padding: 3px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        
+        .content {
+            padding: 30px 40px;
+        }
+        
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .alert-error {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+            color: #991b1b;
+        }
+        
+        .alert-success {
+            background: #ecfdf5;
+            border-left: 4px solid #10b981;
+            color: #065f46;
+        }
+        
+        .alert-info {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            color: #1e40af;
+        }
+        
+        .alert.show {
+            display: block;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+        
+        .form-group label .required {
+            color: #ef4444;
+            margin-left: 2px;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: #f8fafc;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #002b54;
+            box-shadow: 0 0 0 3px rgba(0,43,84,0.1);
+            background: white;
+        }
+        
+        .form-group input:disabled,
+        .form-group select:disabled {
+            background: #f1f5f9;
+            cursor: not-allowed;
+        }
+        
+        .form-group .hint {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+        
+        .btn-primary {
+            background: #002b54;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #003d7a;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,43,84,0.3);
+        }
+        
+        .btn-primary:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: #002b54;
+            border: 2px solid #002b54;
+        }
+        
+        .btn-outline:hover {
+            background: #002b54;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #002b54;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .existing-invoices {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .existing-invoices.show {
+            display: block;
+        }
+        
+        .existing-invoices h4 {
+            font-size: 13px;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        
+        .existing-invoices .invoice-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            border: 1px solid #e2e8f0;
+            font-size: 13px;
+        }
+        
+        .existing-invoices .invoice-item .status {
+            font-weight: 600;
+        }
+        
+        .status-paid {
+            color: #10b981;
+        }
+        .status-unpaid {
+            color: #ef4444;
+        }
+        .status-partial {
+            color: #f59e0b;
+        }
+        
+        .divider {
+            border-top: 1px solid #e2e8f0;
+            margin: 25px 0;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px 40px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        
+        .footer a {
+            color: #002b54;
+            text-decoration: none;
+        }
+        
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        
+        .quick-actions .btn {
+            font-size: 12px;
+            padding: 6px 14px;
+        }
+        
+        .invoice-preview {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .invoice-preview.show {
+            display: block;
+        }
+        
+        .invoice-preview pre {
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow: auto;
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 22px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+            }
+            .header {
+                background: #002b54 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🏫 LUNZU SECONDARY SCHOOL</h1>
+            <div class="subtitle">Invoice Generation Portal</div>
+            <div class="badge">📄 Generate & Download Invoices</div>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <!-- Alerts -->
+            <div id="alert" class="alert"></div>
+            
+            <!-- Main Form -->
+            <form id="invoiceForm" onsubmit="return false;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="studentClass">Student Class <span class="required">*</span></label>
+                        <select id="studentClass" required onchange="loadStudentNames()">
+                            <option value="">Select Class...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="studentName">Student Name <span class="required">*</span></label>
+                        <select id="studentName" required>
+                            <option value="">Select Student...</option>
+                        </select>
+                        <div class="hint">Select a student from the list</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="dateOfBirth">Date of Birth</label>
+                    <input type="date" id="dateOfBirth">
+                    <div class="hint">Optional - used for verification</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="requestedBy">Requested By</label>
+                    <input type="text" id="requestedBy" placeholder="Your name or relationship to student" value="Parent/Guardian">
+                    <div class="hint">Who is requesting this invoice?</div>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="button" class="btn btn-primary" onclick="generateAndDownload()" id="generateBtn">
+                        📄 Generate & Download Invoice
+                    </button>
+                    <button type="button" class="btn btn-outline" onclick="checkExisting()">
+                        🔍 Check Existing Invoices
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="viewInvoice()" id="viewBtn" style="display:none;">
+                        👁️ View Invoice
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Loading -->
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p style="margin-top:10px;color:#64748b;">Generating your invoice...</p>
+            </div>
+            
+            <!-- Existing Invoices -->
+            <div id="existingInvoices" class="existing-invoices">
+                <h4>📋 Existing Invoices</h4>
+                <div id="invoiceList"></div>
+            </div>
+            
+            <!-- Invoice Preview -->
+            <div id="invoicePreview" class="invoice-preview">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <strong style="color:#002b54;">Invoice Preview</strong>
+                    <button class="btn btn-sm btn-success" onclick="downloadPDF()">📥 Download PDF</button>
+                </div>
+                <pre id="previewContent"></pre>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="divider"></div>
+            <div>
+                <h4 style="font-size:14px;color:#1e293b;margin-bottom:10px;">⚡ Quick Actions</h4>
+                <div class="quick-actions">
+                    <button class="btn btn-sm btn-outline" onclick="loadClasses()">🔄 Refresh Classes</button>
+                    <button class="btn btn-sm btn-outline" onclick="clearForm()">🗑️ Clear Form</button>
+                    <button class="btn btn-sm btn-outline" onclick="window.print()">🖨️ Print This Page</button>
+                </div>
+            </div>
+            
+            <!-- Help Section -->
+            <div class="divider"></div>
+            <div style="background:#f1f5f9;padding:15px;border-radius:8px;font-size:13px;color:#475569;">
+                <strong style="color:#002b54;">💡 Help</strong>
+                <ul style="margin-top:8px;padding-left:20px;line-height:1.6;">
+                    <li>Select a student class and name to generate their fee invoice</li>
+                    <li>The invoice will show all fees, payments made, and outstanding balance</li>
+                    <li>Invoices are automatically saved and tracked in the system</li>
+                    <li>You can download the invoice as a PDF for printing or emailing</li>
+                    <li>For multiple students, generate each invoice separately</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p>© 2026 Lunzu Secondary School - All Rights Reserved</p>
+            <p style="margin-top:4px;">Private Bag 130, Lunzu, Malawi | 📞 0888853051</p>
+        </div>
+    </div>
+    
+    <script>
+        // ============================================
+        // GLOBAL STATE
+        // ============================================
+        
+        let currentInvoiceData = null;
+        let currentPDFBase64 = null;
+        let currentFileName = null;
+        
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        
+        function showAlert(message, type) {
+            var alert = document.getElementById('alert');
+            alert.className = 'alert alert-' + type + ' show';
+            alert.textContent = message;
+            
+            // Auto-hide after 10 seconds
+            clearTimeout(alert._timeout);
+            alert._timeout = setTimeout(function() {
+                alert.className = 'alert';
+            }, 10000);
+        }
+        
+        function hideAlert() {
+            document.getElementById('alert').className = 'alert';
+        }
+        
+        function showLoading() {
+            document.getElementById('loading').className = 'loading show';
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').className = 'loading';
+        }
+        
+        function clearForm() {
+            document.getElementById('studentClass').value = '';
+            document.getElementById('studentName').innerHTML = '<option value="">Select Student...</option>';
+            document.getElementById('dateOfBirth').value = '';
+            document.getElementById('requestedBy').value = 'Parent/Guardian';
+            document.getElementById('existingInvoices').className = 'existing-invoices';
+            document.getElementById('invoicePreview').className = 'invoice-preview';
+            document.getElementById('viewBtn').style.display = 'none';
+            hideAlert();
+            currentInvoiceData = null;
+            currentPDFBase64 = null;
+        }
+        
+        // ============================================
+        // API CALLS
+        // ============================================
+        
+        function callApi(action, params, successCallback, errorCallback) {
+            var url = window.location.href;
+            var data = { action: action };
+            
+            // Add all parameters
+            for (var key in params) {
+                if (params.hasOwnProperty(key)) {
+                    data[key] = params[key];
+                }
+            }
+            
+            // For Google Apps Script web app
+            if (window.google && google.script && google.script.run) {
+                // Running in Google Apps Script
+                google.script.run
+                    .withSuccessHandler(successCallback)
+                    .withFailureHandler(errorCallback || function(error) {
+                        showAlert('Error: ' + error, 'error');
+                    })
+                    [action](params);
+                return;
+            }
+            
+            // For standalone web app (deployed)
+            var queryString = Object.keys(data).map(function(key) {
+                return encodeURIComponent(key) + '=' + encodeURIComponent(data[key]);
+            }).join('&');
+            
+            var fullUrl = url.split('?')[0] + '?' + queryString;
+            
+            fetch(fullUrl)
+                .then(function(response) {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(function(result) {
+                    if (result.success !== undefined) {
+                        successCallback(result);
+                    } else {
+                        successCallback({ success: true, data: result });
+                    }
+                })
+                .catch(function(error) {
+                    if (errorCallback) {
+                        errorCallback(error);
+                    } else {
+                        showAlert('Error: ' + error.message, 'error');
+                    }
+                });
+        }
+        
+        // ============================================
+        // LOAD CLASSES AND STUDENTS
+        // ============================================
+        
+        function loadClasses() {
+            callApi('getClasses', {}, function(result) {
+                if (result.success) {
+                    var select = document.getElementById('studentClass');
+                    select.innerHTML = '<option value="">Select Class...</option>';
+                    
+                    if (Array.isArray(result)) {
+                        for (var i = 0; i < result.length; i++) {
+                            var opt = document.createElement('option');
+                            opt.value = result[i].value;
+                            opt.textContent = result[i].label;
+                            select.appendChild(opt);
+                        }
+                    } else if (result && result.data && Array.isArray(result.data)) {
+                        for (var i = 0; i < result.data.length; i++) {
+                            var opt = document.createElement('option');
+                            opt.value = result.data[i].value;
+                            opt.textContent = result.data[i].label;
+                            select.appendChild(opt);
+                        }
+                    }
+                } else {
+                    showAlert('Failed to load classes: ' + (result.error || 'Unknown error'), 'error');
+                }
+            });
+        }
+        
+        function loadStudentNames() {
+            var className = document.getElementById('studentClass').value;
+            var studentSelect = document.getElementById('studentName');
+            
+            if (!className) {
+                studentSelect.innerHTML = '<option value="">Select Student...</option>';
+                return;
+            }
+            
+            studentSelect.innerHTML = '<option value="">Loading...</option>';
+            
+            callApi('getStudentNames', { className: className }, function(result) {
+                studentSelect.innerHTML = '<option value="">Select Student...</option>';
+                
+                if (result.success && Array.isArray(result)) {
+                    for (var i = 0; i < result.length; i++) {
+                        var opt = document.createElement('option');
+                        opt.value = result[i];
+                        opt.textContent = result[i];
+                        studentSelect.appendChild(opt);
+                    }
+                } else if (result.success && result.data && Array.isArray(result.data)) {
+                    for (var i = 0; i < result.data.length; i++) {
+                        var opt = document.createElement('option');
+                        opt.value = result.data[i];
+                        opt.textContent = result.data[i];
+                        studentSelect.appendChild(opt);
+                    }
+                } else {
+                    showAlert('No students found for this class', 'info');
+                }
+            }, function(error) {
+                studentSelect.innerHTML = '<option value="">Error loading students</option>';
+                showAlert('Error loading students: ' + error, 'error');
+            });
+        }
+        
+        // ============================================
+        // CHECK EXISTING INVOICES
+        // ============================================
+        
+        function checkExisting() {
+            var studentName = document.getElementById('studentName').value;
+            var studentClass = document.getElementById('studentClass').value;
+            var dateOfBirth = document.getElementById('dateOfBirth').value;
+            
+            if (!studentName || !studentClass) {
+                showAlert('Please select a student and class first', 'error');
+                return;
+            }
+            
+            showLoading();
+            
+            // Get invoices for this student
+            callApi('getInvoicesByStudent', {
+                studentName: studentName,
+                studentClass: studentClass
+            }, function(result) {
+                hideLoading();
+                
+                var container = document.getElementById('existingInvoices');
+                var list = document.getElementById('invoiceList');
+                
+                if (result.success && result.invoices && result.invoices.length > 0) {
+                    list.innerHTML = '';
+                    for (var i = 0; i < result.invoices.length; i++) {
+                        var inv = result.invoices[i];
+                        var statusClass = 'status-' + inv.status.toLowerCase().replace(' ', '');
+                        var div = document.createElement('div');
+                        div.className = 'invoice-item';
+                        div.innerHTML = `
+                            <span><strong>${inv.invoiceNumber}</strong> - ${inv.issueDate}</span>
+                            <span>Total: K${(inv.totalDue || 0).toLocaleString()}</span>
+                            <span class="status ${statusClass}">${inv.status}</span>
+                            ${inv.balance > 0 ? `<span style="color:#ef4444;">Balance: K${inv.balance.toLocaleString()}</span>` : ''}
+                        `;
+                        list.appendChild(div);
+                    }
+                    container.className = 'existing-invoices show';
+                    showAlert('Found ' + result.invoices.length + ' invoice(s)', 'info');
+                } else {
+                    container.className = 'existing-invoices';
+                    showAlert('No existing invoices found for this student', 'info');
+                }
+            }, function(error) {
+                hideLoading();
+                showAlert('Error checking invoices: ' + error, 'error');
+            });
+        }
+        
+        // ============================================
+        // GENERATE AND DOWNLOAD INVOICE
+        // ============================================
+        
+        function generateAndDownload() {
+            var studentName = document.getElementById('studentName').value;
+            var studentClass = document.getElementById('studentClass').value;
+            var dateOfBirth = document.getElementById('dateOfBirth').value;
+            var requestedBy = document.getElementById('requestedBy').value || 'Parent/Guardian';
+            
+            if (!studentName || !studentClass) {
+                showAlert('Please select a student and class', 'error');
+                return;
+            }
+            
+            hideAlert();
+            showLoading();
+            document.getElementById('generateBtn').disabled = true;
+            
+            // Step 1: Generate the invoice
+            callApi('generateInvoice', {
+                studentName: studentName,
+                studentClass: studentClass,
+                dateOfBirth: dateOfBirth,
+                requestedBy: requestedBy
+            }, function(result) {
+                if (result.success) {
+                    currentInvoiceData = result.invoice;
+                    showAlert('Invoice generated successfully: ' + result.invoice.invoiceNumber, 'success');
+                    
+                    // Step 2: Generate PDF
+                    generatePDF(studentName, studentClass, dateOfBirth);
+                } else {
+                    hideLoading();
+                    document.getElementById('generateBtn').disabled = false;
+                    
+                    if (result.existingInvoices) {
+                        showAlert('Existing unpaid invoices found. Please clear them first.', 'error');
+                        // Show existing invoices
+                        var container = document.getElementById('existingInvoices');
+                        var list = document.getElementById('invoiceList');
+                        list.innerHTML = '';
+                        for (var i = 0; i < result.existingInvoices.length; i++) {
+                            var inv = result.existingInvoices[i];
+                            var div = document.createElement('div');
+                            div.className = 'invoice-item';
+                            div.innerHTML = `
+                                <span><strong>${inv.invoiceNumber}</strong> - ${inv.issueDate}</span>
+                                <span>Balance: K${(inv.balance || 0).toLocaleString()}</span>
+                                <span class="status status-unpaid">${inv.status}</span>
+                            `;
+                            list.appendChild(div);
+                        }
+                        container.className = 'existing-invoices show';
+                    } else {
+                        showAlert('Failed to generate invoice: ' + (result.error || 'Unknown error'), 'error');
+                    }
+                }
+            }, function(error) {
+                hideLoading();
+                document.getElementById('generateBtn').disabled = false;
+                showAlert('Error generating invoice: ' + error, 'error');
+            });
+        }
+        
+        function generatePDF(studentName, studentClass, dateOfBirth) {
+            // Check if we're in Google Apps Script environment
+            if (window.google && google.script && google.script.run) {
+                google.script.run
+                    .withSuccessHandler(function(result) {
+                        hideLoading();
+                        document.getElementById('generateBtn').disabled = false;
+                        
+                        if (result.success && result.pdfBase64) {
+                            currentPDFBase64 = result.pdfBase64;
+                            currentFileName = result.fileName || 'invoice.pdf';
+                            downloadPDF();
+                            showAlert('PDF generated successfully!', 'success');
+                        } else {
+                            showAlert('Failed to generate PDF: ' + (result.error || 'Unknown error'), 'error');
+                        }
+                    })
+                    .withFailureHandler(function(error) {
+                        hideLoading();
+                        document.getElementById('generateBtn').disabled = false;
+                        showAlert('Error generating PDF: ' + error, 'error');
+                    })
+                    .getInvoicePDF(studentName, studentClass, dateOfBirth);
+                return;
+            }
+            
+            // Standalone web app mode - use API call
+            callApi('getInvoicePDF', {
+                studentName: studentName,
+                studentClass: studentClass,
+                dateOfBirth: dateOfBirth
+            }, function(result) {
+                hideLoading();
+                document.getElementById('generateBtn').disabled = false;
+                
+                if (result.success && result.pdfBase64) {
+                    currentPDFBase64 = result.pdfBase64;
+                    currentFileName = result.fileName || 'invoice.pdf';
+                    downloadPDF();
+                    showAlert('PDF generated successfully!', 'success');
+                } else {
+                    showAlert('Failed to generate PDF: ' + (result.error || 'Unknown error'), 'error');
+                }
+            }, function(error) {
+                hideLoading();
+                document.getElementById('generateBtn').disabled = false;
+                showAlert('Error generating PDF: ' + error, 'error');
+            });
+        }
+        
+        function downloadPDF() {
+            if (!currentPDFBase64) {
+                showAlert('No PDF available. Please generate an invoice first.', 'error');
+                return;
+            }
+            
+            var link = document.createElement('a');
+            link.href = 'data:application/pdf;base64,' + currentPDFBase64;
+            link.download = currentFileName || 'invoice.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        function viewInvoice() {
+            if (!currentInvoiceData) {
+                showAlert('No invoice data available. Please generate an invoice first.', 'error');
+                return;
+            }
+            
+            var preview = document.getElementById('invoicePreview');
+            var content = document.getElementById('previewContent');
+            content.textContent = JSON.stringify(currentInvoiceData, null, 2);
+            preview.className = 'invoice-preview show';
+            document.getElementById('viewBtn').style.display = 'inline-flex';
+        }
+        
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            loadClasses();
+            
+            // Handle Enter key on form
+            document.getElementById('invoiceForm').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    generateAndDownload();
+                }
+            });
+        });
+        
+        // ============================================
+        // EXPOSE FUNCTIONS TO GLOBAL SCOPE
+        // ============================================
+        
+        // Make functions available for inline onclick handlers
+        window.loadClasses = loadClasses;
+        window.loadStudentNames = loadStudentNames;
+        window.checkExisting = checkExisting;
+        window.generateAndDownload = generateAndDownload;
+        window.downloadPDF = downloadPDF;
+        window.viewInvoice = viewInvoice;
+        window.clearForm = clearForm;
+    </script>
+</body>
+</html>
