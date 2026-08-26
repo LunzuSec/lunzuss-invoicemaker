@@ -175,6 +175,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            z-index: 10;
         }
         
         .student-entry .remove-btn:hover {
@@ -503,7 +504,7 @@
             <!-- Loading -->
             <div id="loading" class="loading">
                 <div class="spinner"></div>
-                <p style="margin-top:10px;color:#64748b;">Generating your invoice...</p>
+                <p style="margin-top:10px;color:#64748b;">Processing your request...</p>
             </div>
             
             <!-- Existing Invoices -->
@@ -539,6 +540,7 @@
         // CONFIGURATION
         // ============================================
         
+        // IMPORTANT: Replace with your actual Google Apps Script URL
         const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxFcGYfxd80d2-fDL7FuKglFxsdbrtUz2x685C8Kcs5i1Qmg6_vgIEZMRrY741_-ASIAg/exec';
         
         // ============================================
@@ -549,7 +551,8 @@
         let currentPDFBase64 = null;
         let currentFileName = null;
         let isGenerating = false;
-        let classData = {};
+        let classData = [];
+        let pendingRequests = 0;
         
         // ============================================
         // UTILITY FUNCTIONS
@@ -585,12 +588,17 @@
         }
         
         // ============================================
-        // JSONP API CALLS
+        // ROBUST JSONP API CALLS WITH RETRY
         // ============================================
         
-        function callApi(action, params, successCallback, errorCallback) {
-            var callbackName = 'jsonp_callback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+        function callApi(action, params, successCallback, errorCallback, retryCount) {
+            retryCount = retryCount || 0;
+            var maxRetries = 3;
             
+            // Generate unique callback name
+            var callbackName = 'jsonp_callback_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+            
+            // Build the URL
             var data = { action: action, callback: callbackName };
             for (var key in params) {
                 if (params.hasOwnProperty(key)) {
@@ -604,36 +612,72 @@
             
             var fullUrl = GAS_WEB_APP_URL + '?' + queryString;
             
+            // Create script element
             var script = document.createElement('script');
             script.src = fullUrl;
+            script.async = true;
             
+            // Track if callback was called
+            var callbackCalled = false;
+            
+            // Define callback function
             window[callbackName] = function(result) {
+                callbackCalled = true;
+                // Clean up
                 delete window[callbackName];
                 document.body.removeChild(script);
-                clearTimeout(timeout);
+                clearTimeout(timeoutId);
                 
-                if (result.success !== undefined) {
-                    if (successCallback) successCallback(result);
+                if (result && typeof result === 'object') {
+                    if (result.success !== undefined) {
+                        if (successCallback) successCallback(result);
+                    } else {
+                        if (successCallback) successCallback({ success: true, data: result });
+                    }
                 } else {
-                    if (successCallback) successCallback({ success: true, data: result });
+                    if (errorCallback) {
+                        errorCallback('Invalid response format');
+                    } else {
+                        showAlert('Invalid response from server', 'error');
+                    }
                 }
             };
             
+            // Error handler for script loading
             script.onerror = function() {
+                if (callbackCalled) return;
+                
                 delete window[callbackName];
                 document.body.removeChild(script);
-                clearTimeout(timeout);
-                if (errorCallback) {
-                    errorCallback('Request failed');
+                clearTimeout(timeoutId);
+                
+                // Retry logic
+                if (retryCount < maxRetries) {
+                    setTimeout(function() {
+                        callApi(action, params, successCallback, errorCallback, retryCount + 1);
+                    }, 1000 * (retryCount + 1));
                 } else {
-                    showAlert('Request failed. Please try again.', 'error');
+                    if (errorCallback) {
+                        errorCallback('Request failed after ' + maxRetries + ' attempts');
+                    } else {
+                        showAlert('Failed to connect to server. Please check your internet connection.', 'error');
+                    }
                 }
             };
             
-            var timeout = setTimeout(function() {
-                if (window[callbackName]) {
-                    delete window[callbackName];
-                    document.body.removeChild(script);
+            // Timeout handler
+            var timeoutId = setTimeout(function() {
+                if (callbackCalled) return;
+                
+                delete window[callbackName];
+                document.body.removeChild(script);
+                
+                // Retry on timeout
+                if (retryCount < maxRetries) {
+                    setTimeout(function() {
+                        callApi(action, params, successCallback, errorCallback, retryCount + 1);
+                    }, 1000 * (retryCount + 1));
+                } else {
                     if (errorCallback) {
                         errorCallback('Request timeout');
                     } else {
@@ -642,6 +686,7 @@
                 }
             }, 30000);
             
+            // Add script to page
             document.body.appendChild(script);
         }
         
@@ -650,17 +695,34 @@
         // ============================================
         
         function loadClasses() {
+            showLoading();
+            
             callApi('getClasses', {}, function(result) {
-                var classes = Array.isArray(result) ? result : (result.data || []);
+                hideLoading();
+                
+                // Handle different response formats
+                var classes = [];
+                if (Array.isArray(result)) {
+                    classes = result;
+                } else if (result.data && Array.isArray(result.data)) {
+                    classes = result.data;
+                } else if (result.classes && Array.isArray(result.classes)) {
+                    classes = result.classes;
+                }
+                
                 classData = classes;
                 
-                // Store class data for later use
-                // Also populate existing student entries
-                var selects = document.querySelectorAll('.student-class-select');
-                for (var i = 0; i < selects.length; i++) {
-                    populateClassSelect(selects[i], classes);
+                if (classes.length > 0) {
+                    // Populate existing student entries
+                    var selects = document.querySelectorAll('.student-class-select');
+                    for (var i = 0; i < selects.length; i++) {
+                        populateClassSelect(selects[i], classes);
+                    }
+                } else {
+                    showAlert('No classes loaded. Please refresh the page.', 'info');
                 }
             }, function(error) {
+                hideLoading();
                 showAlert('Error loading classes: ' + error, 'error');
             });
         }
@@ -671,8 +733,8 @@
             
             for (var i = 0; i < classes.length; i++) {
                 var opt = document.createElement('option');
-                opt.value = classes[i].value;
-                opt.textContent = classes[i].label;
+                opt.value = classes[i].value || classes[i];
+                opt.textContent = classes[i].label || classes[i];
                 select.appendChild(opt);
             }
             
@@ -687,23 +749,39 @@
                 return;
             }
             
+            var currentValue = select.value;
             select.innerHTML = '<option value="">Loading...</option>';
+            select.disabled = true;
             
             callApi('getStudentNames', { className: className }, function(result) {
+                select.disabled = false;
                 select.innerHTML = '<option value="">Select Student...</option>';
-                var names = Array.isArray(result) ? result : (result.data || []);
                 
-                for (var i = 0; i < names.length; i++) {
-                    var opt = document.createElement('option');
-                    opt.value = names[i];
-                    opt.textContent = names[i];
-                    select.appendChild(opt);
+                // Handle different response formats
+                var names = [];
+                if (Array.isArray(result)) {
+                    names = result;
+                } else if (result.data && Array.isArray(result.data)) {
+                    names = result.data;
+                } else if (result.names && Array.isArray(result.names)) {
+                    names = result.names;
                 }
                 
-                if (names.length === 0) {
+                if (names.length > 0) {
+                    for (var i = 0; i < names.length; i++) {
+                        var opt = document.createElement('option');
+                        opt.value = names[i];
+                        opt.textContent = names[i];
+                        select.appendChild(opt);
+                    }
+                    if (currentValue) {
+                        select.value = currentValue;
+                    }
+                } else {
                     select.innerHTML = '<option value="">No students found</option>';
                 }
             }, function(error) {
+                select.disabled = false;
                 select.innerHTML = '<option value="">Error loading students</option>';
                 showAlert('Error loading students: ' + error, 'error');
             });
@@ -834,7 +912,7 @@
                         div.className = 'invoice-item';
                         div.innerHTML = `
                             <span><strong>${inv.invoiceNumber}</strong> - ${inv.issueDate}</span>
-                            <span>Students: ${inv.studentList}</span>
+                            <span>Students: ${inv.studentList || 'N/A'}</span>
                             <span>Total: K${(inv.totalFees || 0).toLocaleString()}</span>
                             <span class="status ${statusClass}">${inv.status}</span>
                             ${inv.totalBalance > 0 ? `<span style="color:#ef4444;">Balance: K${inv.totalBalance.toLocaleString()}</span>` : ''}
@@ -946,6 +1024,7 @@
                             document.getElementById('parentName').value = '';
                             document.getElementById('parentPhone').value = '';
                             document.getElementById('parentEmail').value = '';
+                            document.getElementById('existingInvoices').className = 'existing-invoices';
                         } else {
                             showAlert('Failed to generate PDF: ' + (pdfResult.error || 'Unknown error'), 'error');
                         }
@@ -985,16 +1064,22 @@
         // ============================================
         
         document.addEventListener('DOMContentLoaded', function() {
+            // Load classes
             loadClasses();
             
-            // Add initial student entry
-            addStudent();
+            // Add initial student entry after classes load
+            setTimeout(function() {
+                addStudent();
+            }, 1000);
             
             // Handle Enter key on form
-            document.getElementById('invoiceForm')?.addEventListener('keypress', function(e) {
+            document.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
-                    e.preventDefault();
-                    generateAndDownload();
+                    var target = e.target;
+                    if (target.tagName === 'INPUT' || target.tagName === 'SELECT') {
+                        e.preventDefault();
+                        generateAndDownload();
+                    }
                 }
             });
         });
@@ -1011,6 +1096,7 @@
         window.generateAndDownload = generateAndDownload;
         window.downloadPDF = downloadPDF;
         window.downloadInvoice = downloadInvoice;
+        window.loadClasses = loadClasses;
     </script>
 </body>
 </html>
