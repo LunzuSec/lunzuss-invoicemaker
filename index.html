@@ -267,12 +267,15 @@
         .existing-invoices .invoice-item {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             padding: 8px 12px;
             background: white;
             border-radius: 6px;
             margin-bottom: 5px;
             border: 1px solid #e2e8f0;
             font-size: 13px;
+            flex-wrap: wrap;
+            gap: 5px;
         }
         
         .existing-invoices .invoice-item .status {
@@ -343,6 +346,26 @@
             border-radius: 6px;
         }
         
+        .help-section {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #475569;
+        }
+        
+        .help-section strong {
+            color: #002b54;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .help-section ul {
+            margin-top: 8px;
+            padding-left: 20px;
+            line-height: 1.6;
+        }
+        
         @media (max-width: 768px) {
             .content {
                 padding: 20px;
@@ -368,6 +391,11 @@
                 width: 100%;
                 justify-content: center;
             }
+            
+            .existing-invoices .invoice-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
         }
         
         @media print {
@@ -382,6 +410,9 @@
                 background: #002b54 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+            }
+            .btn, .quick-actions {
+                display: none !important;
             }
         }
     </style>
@@ -421,7 +452,7 @@
                 <div class="form-group">
                     <label for="dateOfBirth">Date of Birth</label>
                     <input type="date" id="dateOfBirth">
-                    <div class="hint">Optional - used for verification</div>
+                    <div class="hint">Optional - used for verification purposes</div>
                 </div>
                 
                 <div class="form-group">
@@ -438,7 +469,7 @@
                         🔍 Check Existing Invoices
                     </button>
                     <button type="button" class="btn btn-success" onclick="viewInvoice()" id="viewBtn" style="display:none;">
-                        👁️ View Invoice
+                        👁️ View Invoice Data
                     </button>
                 </div>
             </form>
@@ -457,9 +488,12 @@
             
             <!-- Invoice Preview -->
             <div id="invoicePreview" class="invoice-preview">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                    <strong style="color:#002b54;">Invoice Preview</strong>
-                    <button class="btn btn-sm btn-success" onclick="downloadPDF()">📥 Download PDF</button>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:10px;">
+                    <strong style="color:#002b54;">Invoice Data Preview</strong>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button class="btn btn-sm btn-success" onclick="downloadPDF()">📥 Download PDF</button>
+                        <button class="btn btn-sm btn-outline" onclick="closePreview()">✕ Close</button>
+                    </div>
                 </div>
                 <pre id="previewContent"></pre>
             </div>
@@ -477,14 +511,15 @@
             
             <!-- Help Section -->
             <div class="divider"></div>
-            <div style="background:#f1f5f9;padding:15px;border-radius:8px;font-size:13px;color:#475569;">
-                <strong style="color:#002b54;">💡 Help</strong>
-                <ul style="margin-top:8px;padding-left:20px;line-height:1.6;">
-                    <li>Select a student class and name to generate their fee invoice</li>
-                    <li>The invoice will show all fees, payments made, and outstanding balance</li>
-                    <li>Invoices are automatically saved and tracked in the system</li>
-                    <li>You can download the invoice as a PDF for printing or emailing</li>
-                    <li>For multiple students, generate each invoice separately</li>
+            <div class="help-section">
+                <strong>💡 How to Use This Portal</strong>
+                <ul>
+                    <li>Select a student class and then the student name from the dropdown lists</li>
+                    <li>Click <strong>"Generate & Download Invoice"</strong> to create a professional PDF invoice</li>
+                    <li>The invoice includes all fee details, payment history, and outstanding balance</li>
+                    <li>Use <strong>"Check Existing Invoices"</strong> to see all previous invoices for a student</li>
+                    <li>All invoices are automatically saved and tracked in the system</li>
+                    <li>You can print or email the PDF invoice directly</li>
                 </ul>
             </div>
         </div>
@@ -504,6 +539,7 @@
         let currentInvoiceData = null;
         let currentPDFBase64 = null;
         let currentFileName = null;
+        let isGenerating = false;
         
         // ============================================
         // UTILITY FUNCTIONS
@@ -544,6 +580,12 @@
             hideAlert();
             currentInvoiceData = null;
             currentPDFBase64 = null;
+            document.getElementById('generateBtn').disabled = false;
+            document.getElementById('generateBtn').innerHTML = '📄 Generate & Download Invoice';
+        }
+        
+        function closePreview() {
+            document.getElementById('invoicePreview').className = 'invoice-preview';
         }
         
         // ============================================
@@ -551,34 +593,29 @@
         // ============================================
         
         function callApi(action, params, successCallback, errorCallback) {
-            var url = window.location.href;
-            var data = { action: action };
-            
-            // Add all parameters
-            for (var key in params) {
-                if (params.hasOwnProperty(key)) {
-                    data[key] = params[key];
-                }
-            }
-            
             // For Google Apps Script web app
             if (window.google && google.script && google.script.run) {
-                // Running in Google Apps Script
                 google.script.run
-                    .withSuccessHandler(successCallback)
-                    .withFailureHandler(errorCallback || function(error) {
-                        showAlert('Error: ' + error, 'error');
+                    .withSuccessHandler(function(result) {
+                        if (successCallback) successCallback(result);
+                    })
+                    .withFailureHandler(function(error) {
+                        if (errorCallback) {
+                            errorCallback(error);
+                        } else {
+                            showAlert('Error: ' + error, 'error');
+                        }
                     })
                     [action](params);
                 return;
             }
             
-            // For standalone web app (deployed)
-            var queryString = Object.keys(data).map(function(key) {
-                return encodeURIComponent(key) + '=' + encodeURIComponent(data[key]);
+            // Fallback: Use fetch for standalone deployment
+            var queryString = Object.keys(params).map(function(key) {
+                return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
             }).join('&');
             
-            var fullUrl = url.split('?')[0] + '?' + queryString;
+            var fullUrl = window.location.href.split('?')[0] + '?action=' + action + '&' + queryString;
             
             fetch(fullUrl)
                 .then(function(response) {
@@ -588,11 +625,7 @@
                     return response.json();
                 })
                 .then(function(result) {
-                    if (result.success !== undefined) {
-                        successCallback(result);
-                    } else {
-                        successCallback({ success: true, data: result });
-                    }
+                    if (successCallback) successCallback(result);
                 })
                 .catch(function(error) {
                     if (errorCallback) {
@@ -609,28 +642,21 @@
         
         function loadClasses() {
             callApi('getClasses', {}, function(result) {
-                if (result.success) {
-                    var select = document.getElementById('studentClass');
-                    select.innerHTML = '<option value="">Select Class...</option>';
-                    
-                    if (Array.isArray(result)) {
-                        for (var i = 0; i < result.length; i++) {
-                            var opt = document.createElement('option');
-                            opt.value = result[i].value;
-                            opt.textContent = result[i].label;
-                            select.appendChild(opt);
-                        }
-                    } else if (result && result.data && Array.isArray(result.data)) {
-                        for (var i = 0; i < result.data.length; i++) {
-                            var opt = document.createElement('option');
-                            opt.value = result.data[i].value;
-                            opt.textContent = result.data[i].label;
-                            select.appendChild(opt);
-                        }
+                var select = document.getElementById('studentClass');
+                select.innerHTML = '<option value="">Select Class...</option>';
+                
+                if (result && result.length > 0) {
+                    for (var i = 0; i < result.length; i++) {
+                        var opt = document.createElement('option');
+                        opt.value = result[i].value;
+                        opt.textContent = result[i].label;
+                        select.appendChild(opt);
                     }
                 } else {
-                    showAlert('Failed to load classes: ' + (result.error || 'Unknown error'), 'error');
+                    showAlert('Failed to load classes', 'error');
                 }
+            }, function(error) {
+                showAlert('Error loading classes: ' + error, 'error');
             });
         }
         
@@ -648,21 +674,15 @@
             callApi('getStudentNames', { className: className }, function(result) {
                 studentSelect.innerHTML = '<option value="">Select Student...</option>';
                 
-                if (result.success && Array.isArray(result)) {
+                if (result && result.length > 0) {
                     for (var i = 0; i < result.length; i++) {
                         var opt = document.createElement('option');
                         opt.value = result[i];
                         opt.textContent = result[i];
                         studentSelect.appendChild(opt);
                     }
-                } else if (result.success && result.data && Array.isArray(result.data)) {
-                    for (var i = 0; i < result.data.length; i++) {
-                        var opt = document.createElement('option');
-                        opt.value = result.data[i];
-                        opt.textContent = result.data[i];
-                        studentSelect.appendChild(opt);
-                    }
                 } else {
+                    studentSelect.innerHTML = '<option value="">No students found</option>';
                     showAlert('No students found for this class', 'info');
                 }
             }, function(error) {
@@ -678,7 +698,6 @@
         function checkExisting() {
             var studentName = document.getElementById('studentName').value;
             var studentClass = document.getElementById('studentClass').value;
-            var dateOfBirth = document.getElementById('dateOfBirth').value;
             
             if (!studentName || !studentClass) {
                 showAlert('Please select a student and class first', 'error');
@@ -687,7 +706,6 @@
             
             showLoading();
             
-            // Get invoices for this student
             callApi('getInvoicesByStudent', {
                 studentName: studentName,
                 studentClass: studentClass
@@ -709,6 +727,7 @@
                             <span>Total: K${(inv.totalDue || 0).toLocaleString()}</span>
                             <span class="status ${statusClass}">${inv.status}</span>
                             ${inv.balance > 0 ? `<span style="color:#ef4444;">Balance: K${inv.balance.toLocaleString()}</span>` : ''}
+                            <button class="btn btn-sm btn-success" onclick="downloadExistingInvoice('${inv.invoiceNumber}')">📥 PDF</button>
                         `;
                         list.appendChild(div);
                     }
@@ -724,11 +743,29 @@
             });
         }
         
+        function downloadExistingInvoice(invoiceNumber) {
+            showLoading();
+            callApi('getInvoiceByNumber', { invoiceNumber: invoiceNumber }, function(result) {
+                hideLoading();
+                if (result.success && result.invoice) {
+                    // Generate PDF from the invoice data
+                    generatePDFFromData(result.invoice);
+                } else {
+                    showAlert('Error retrieving invoice: ' + (result.error || 'Unknown error'), 'error');
+                }
+            }, function(error) {
+                hideLoading();
+                showAlert('Error: ' + error, 'error');
+            });
+        }
+        
         // ============================================
         // GENERATE AND DOWNLOAD INVOICE
         // ============================================
         
         function generateAndDownload() {
+            if (isGenerating) return;
+            
             var studentName = document.getElementById('studentName').value;
             var studentClass = document.getElementById('studentClass').value;
             var dateOfBirth = document.getElementById('dateOfBirth').value;
@@ -741,7 +778,9 @@
             
             hideAlert();
             showLoading();
+            isGenerating = true;
             document.getElementById('generateBtn').disabled = true;
+            document.getElementById('generateBtn').innerHTML = '⏳ Generating...';
             
             // Step 1: Generate the invoice
             callApi('generateInvoice', {
@@ -758,7 +797,9 @@
                     generatePDF(studentName, studentClass, dateOfBirth);
                 } else {
                     hideLoading();
+                    isGenerating = false;
                     document.getElementById('generateBtn').disabled = false;
+                    document.getElementById('generateBtn').innerHTML = '📄 Generate & Download Invoice';
                     
                     if (result.existingInvoices) {
                         showAlert('Existing unpaid invoices found. Please clear them first.', 'error');
@@ -784,58 +825,62 @@
                 }
             }, function(error) {
                 hideLoading();
+                isGenerating = false;
                 document.getElementById('generateBtn').disabled = false;
+                document.getElementById('generateBtn').innerHTML = '📄 Generate & Download Invoice';
                 showAlert('Error generating invoice: ' + error, 'error');
             });
         }
         
         function generatePDF(studentName, studentClass, dateOfBirth) {
-            // Check if we're in Google Apps Script environment
-            if (window.google && google.script && google.script.run) {
-                google.script.run
-                    .withSuccessHandler(function(result) {
-                        hideLoading();
-                        document.getElementById('generateBtn').disabled = false;
-                        
-                        if (result.success && result.pdfBase64) {
-                            currentPDFBase64 = result.pdfBase64;
-                            currentFileName = result.fileName || 'invoice.pdf';
-                            downloadPDF();
-                            showAlert('PDF generated successfully!', 'success');
-                        } else {
-                            showAlert('Failed to generate PDF: ' + (result.error || 'Unknown error'), 'error');
-                        }
-                    })
-                    .withFailureHandler(function(error) {
-                        hideLoading();
-                        document.getElementById('generateBtn').disabled = false;
-                        showAlert('Error generating PDF: ' + error, 'error');
-                    })
-                    .getInvoicePDF(studentName, studentClass, dateOfBirth);
-                return;
-            }
-            
-            // Standalone web app mode - use API call
             callApi('getInvoicePDF', {
                 studentName: studentName,
                 studentClass: studentClass,
                 dateOfBirth: dateOfBirth
             }, function(result) {
                 hideLoading();
+                isGenerating = false;
                 document.getElementById('generateBtn').disabled = false;
+                document.getElementById('generateBtn').innerHTML = '📄 Generate & Download Invoice';
                 
                 if (result.success && result.pdfBase64) {
                     currentPDFBase64 = result.pdfBase64;
                     currentFileName = result.fileName || 'invoice.pdf';
                     downloadPDF();
                     showAlert('PDF generated successfully!', 'success');
+                    document.getElementById('viewBtn').style.display = 'inline-flex';
                 } else {
                     showAlert('Failed to generate PDF: ' + (result.error || 'Unknown error'), 'error');
                 }
             }, function(error) {
                 hideLoading();
+                isGenerating = false;
                 document.getElementById('generateBtn').disabled = false;
+                document.getElementById('generateBtn').innerHTML = '📄 Generate & Download Invoice';
                 showAlert('Error generating PDF: ' + error, 'error');
+            });
+        }
+        
+        function generatePDFFromData(invoiceData) {
+            // This is a fallback - in production, the server should generate the PDF
+            // For now, we'll use the existing PDF generation
+            callApi('getInvoicePDF', {
+                studentName: invoiceData.studentName,
+                studentClass: invoiceData.studentClass,
+                dateOfBirth: invoiceData.dateOfBirth || ''
+            }, function(result) {
+                hideLoading();
+                if (result.success && result.pdfBase64) {
+                    currentPDFBase64 = result.pdfBase64;
+                    currentFileName = result.fileName || 'invoice.pdf';
+                    downloadPDF();
+                    showAlert('PDF downloaded successfully!', 'success');
+                } else {
+                    showAlert('Error generating PDF: ' + (result.error || 'Unknown error'), 'error');
+                }
+            }, function(error) {
+                hideLoading();
+                showAlert('Error: ' + error, 'error');
             });
         }
         
@@ -886,7 +931,6 @@
         // EXPOSE FUNCTIONS TO GLOBAL SCOPE
         // ============================================
         
-        // Make functions available for inline onclick handlers
         window.loadClasses = loadClasses;
         window.loadStudentNames = loadStudentNames;
         window.checkExisting = checkExisting;
@@ -894,6 +938,8 @@
         window.downloadPDF = downloadPDF;
         window.viewInvoice = viewInvoice;
         window.clearForm = clearForm;
+        window.closePreview = closePreview;
+        window.downloadExistingInvoice = downloadExistingInvoice;
     </script>
 </body>
 </html>
