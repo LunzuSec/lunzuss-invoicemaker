@@ -550,6 +550,7 @@
                     <li>Select <strong>one or more terms</strong> using the checkboxes</li>
                     <li>Click <strong>"Generate Invoice (PDF)"</strong> to create a single PDF with all terms</li>
                     <li>The invoice shows each student's fees per term with class and grand totals</li>
+                    <li><strong>Previous Balance</strong> is shown as a separate column</li>
                     <li>Use <strong>"Check Existing Invoices"</strong> to see all previous invoices</li>
                 </ul>
             </div>
@@ -566,7 +567,7 @@
         // ============================================
         // CONFIGURATION - UPDATE THIS WITH YOUR DEPLOYMENT URL
         // ============================================
-        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxFcGYfxd80d2-fDL7FuKglFxsdbrtUz2x685C8Kcs5i1Qmg6_vgIEZMRrY741_-ASIAg/exec';
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
         
         // ============================================
         // GLOBAL STATE
@@ -620,7 +621,6 @@
                 }
             }
             if (selected.length === 0) {
-                // Select first term by default
                 selected = ["TERM 1"];
                 checkboxes[0].checked = true;
             }
@@ -1040,7 +1040,6 @@
                             downloadPDF();
                             showAlert('PDF downloaded successfully!', 'success');
                             
-                            // Clear form after successful generation
                             document.getElementById('studentsContainer').innerHTML = '';
                             studentCounter = 0;
                             updateStudentCount();
@@ -1103,7 +1102,6 @@
                 }
             });
             
-            // Ensure at least one term is always selected
             var checkboxes = document.querySelectorAll('.term-checkbox');
             for (var i = 0; i < checkboxes.length; i++) {
                 checkboxes[i].addEventListener('change', function() {
