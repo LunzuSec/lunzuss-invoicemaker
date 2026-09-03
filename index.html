@@ -367,6 +367,28 @@
             margin-left: 10px;
         }
         
+        .terms-select {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        
+        .terms-select label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        
+        .terms-select input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #002b54;
+            cursor: pointer;
+        }
+        
         @media (max-width: 768px) {
             .content {
                 padding: 20px;
@@ -424,7 +446,7 @@
         <div class="header">
             <h1>🏫 LUNZU SECONDARY SCHOOL</h1>
             <div class="subtitle">Boarding Fees Invoice Portal</div>
-            <div class="badge">📄 Generate Invoices for Multiple Students</div>
+            <div class="badge">📄 Generate Invoices for Multiple Students &amp; Terms</div>
         </div>
         
         <!-- Content -->
@@ -472,15 +494,37 @@
             
             <div class="divider"></div>
             
-            <!-- Term Selection -->
-            <div class="form-group">
-                <label for="termSelect">Academic Term</label>
-                <select id="termSelect">
-                    <option value="TERM 1">TERM 1</option>
-                    <option value="TERM 2">TERM 2</option>
-                    <option value="TERM 3">TERM 3</option>
-                </select>
+            <!-- Term Selection - Multiple Terms -->
+            <div>
+                <h3 class="section-title">📅 Select Terms</h3>
+                <p style="font-size: 13px; color: #64748b; margin-bottom: 10px;">
+                    Select the terms you want to include in this invoice. Fees will be shown per term.
+                </p>
+                <div class="terms-select" id="termsContainer">
+                    <label>
+                        <input type="checkbox" class="term-checkbox" value="TERM 1" checked>
+                        TERM 1
+                    </label>
+                    <label>
+                        <input type="checkbox" class="term-checkbox" value="TERM 2">
+                        TERM 2
+                    </label>
+                    <label>
+                        <input type="checkbox" class="term-checkbox" value="TERM 3">
+                        TERM 3
+                    </label>
+                </div>
+                <div class="form-group" style="margin-top: 10px;">
+                    <label for="termSelect">Or Select Single Term</label>
+                    <select id="termSelect">
+                        <option value="TERM 1">TERM 1</option>
+                        <option value="TERM 2">TERM 2</option>
+                        <option value="TERM 3">TERM 3</option>
+                    </select>
+                </div>
             </div>
+            
+            <div class="divider"></div>
             
             <!-- Generate Button -->
             <div class="btn-group">
@@ -511,8 +555,9 @@
                 <ul>
                     <li>Enter the <strong>Parent/Guardian</strong> details who will receive the invoice</li>
                     <li>Add <strong>one or more students</strong> by selecting their class and name</li>
-                    <li>Click <strong>"Generate Invoice (PDF)"</strong> to create a PDF invoice</li>
-                    <li>The invoice shows boarding fees, previous balance, payments, and amount due</li>
+                    <li>Select <strong>one or more terms</strong> using the checkboxes or dropdown</li>
+                    <li>Click <strong>"Generate Invoice (PDF)"</strong> to create a single PDF with all terms</li>
+                    <li>The invoice shows each student's fees per term with class and grand totals</li>
                     <li>Use <strong>"Check Existing Invoices"</strong> to see all previous invoices</li>
                 </ul>
             </div>
@@ -531,7 +576,7 @@
         // ============================================
         
         // IMPORTANT: Replace with your actual Google Apps Script URL
-        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxFcGYfxd80d2-fDL7FuKglFxsdbrtUz2x685C8Kcs5i1Qmg6_vgIEZMRrY741_-ASIAg/exec';
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
         
         // ============================================
         // GLOBAL STATE
@@ -574,6 +619,22 @@
             var container = document.getElementById('studentsContainer');
             var students = container.querySelectorAll('.student-entry');
             document.getElementById('studentCount').textContent = '(' + students.length + ' students)';
+        }
+        
+        function getSelectedTerms() {
+            var checkboxes = document.querySelectorAll('.term-checkbox');
+            var selected = [];
+            for (var i = 0; i < checkboxes.length; i++) {
+                if (checkboxes[i].checked) {
+                    selected.push(checkboxes[i].value);
+                }
+            }
+            if (selected.length === 0) {
+                // Fallback to dropdown
+                var dropdown = document.getElementById('termSelect');
+                return [dropdown.value];
+            }
+            return selected;
         }
         
         // ============================================
@@ -883,6 +944,7 @@
                         div.className = 'invoice-item';
                         div.innerHTML = `
                             <span><strong>${inv.invoiceNumber}</strong> - ${inv.issueDate}</span>
+                            <span>${inv.terms || 'TERM 1'}</span>
                             <span>Students: ${inv.studentList || 'N/A'}</span>
                             <span>Total: K${(inv.totalFees || 0).toLocaleString()}</span>
                             <span class="status ${statusClass}">${inv.status}</span>
@@ -930,7 +992,7 @@
             var parentName = document.getElementById('parentName').value.trim();
             var parentPhone = document.getElementById('parentPhone').value.trim();
             var parentEmail = document.getElementById('parentEmail').value.trim();
-            var term = document.getElementById('termSelect').value;
+            var terms = getSelectedTerms();
             var students = getStudentsData();
             
             if (!parentName) {
@@ -962,15 +1024,18 @@
                 studentsParam += students[i].name + '|' + students[i].class;
             }
             
+            var termsParam = terms.join(',');
+            
             callApi('generateInvoice', {
                 students: studentsParam,
                 parentName: parentName,
                 parentPhone: parentPhone,
                 parentEmail: parentEmail,
-                term: term
+                terms: termsParam
             }, function(result) {
                 if (result.success) {
-                    showAlert('Invoice generated: ' + result.invoice.invoiceNumber, 'success');
+                    var termsDisplay = terms.join(' + ');
+                    showAlert('Invoice generated: ' + result.invoice.invoiceNumber + ' (' + termsDisplay + ')', 'success');
                     
                     callApi('getInvoicePDF', { invoiceNumber: result.invoice.invoiceNumber }, function(pdfResult) {
                         hideLoading();
@@ -984,6 +1049,7 @@
                             downloadPDF();
                             showAlert('PDF downloaded successfully!', 'success');
                             
+                            // Clear form after successful generation
                             document.getElementById('studentsContainer').innerHTML = '';
                             studentCounter = 0;
                             updateStudentCount();
@@ -1026,6 +1092,37 @@
         }
         
         // ============================================
+        // TERM CHECKBOX SYNC
+        // ============================================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            var checkboxes = document.querySelectorAll('.term-checkbox');
+            var dropdown = document.getElementById('termSelect');
+            
+            // When checkbox changes, update dropdown
+            for (var i = 0; i < checkboxes.length; i++) {
+                checkboxes[i].addEventListener('change', function() {
+                    var selected = getSelectedTerms();
+                    if (selected.length === 1) {
+                        dropdown.value = selected[0];
+                    } else if (selected.length > 1) {
+                        dropdown.value = 'MULTIPLE';
+                    }
+                });
+            }
+            
+            // When dropdown changes, update checkboxes
+            dropdown.addEventListener('change', function() {
+                var value = dropdown.value;
+                if (value !== 'MULTIPLE') {
+                    for (var i = 0; i < checkboxes.length; i++) {
+                        checkboxes[i].checked = (checkboxes[i].value === value);
+                    }
+                }
+            });
+        });
+        
+        // ============================================
         // INITIALIZATION
         // ============================================
         
@@ -1060,6 +1157,7 @@
         window.downloadPDF = downloadPDF;
         window.downloadInvoice = downloadInvoice;
         window.loadClasses = loadClasses;
+        window.getSelectedTerms = getSelectedTerms;
     </script>
 </body>
 </html>
