@@ -514,14 +514,6 @@
                         TERM 3
                     </label>
                 </div>
-                <div class="form-group" style="margin-top: 10px;">
-                    <label for="termSelect">Or Select Single Term</label>
-                    <select id="termSelect">
-                        <option value="TERM 1">TERM 1</option>
-                        <option value="TERM 2">TERM 2</option>
-                        <option value="TERM 3">TERM 3</option>
-                    </select>
-                </div>
             </div>
             
             <div class="divider"></div>
@@ -555,7 +547,7 @@
                 <ul>
                     <li>Enter the <strong>Parent/Guardian</strong> details who will receive the invoice</li>
                     <li>Add <strong>one or more students</strong> by selecting their class and name</li>
-                    <li>Select <strong>one or more terms</strong> using the checkboxes or dropdown</li>
+                    <li>Select <strong>one or more terms</strong> using the checkboxes</li>
                     <li>Click <strong>"Generate Invoice (PDF)"</strong> to create a single PDF with all terms</li>
                     <li>The invoice shows each student's fees per term with class and grand totals</li>
                     <li>Use <strong>"Check Existing Invoices"</strong> to see all previous invoices</li>
@@ -572,10 +564,8 @@
     
     <script>
         // ============================================
-        // CONFIGURATION
+        // CONFIGURATION - UPDATE THIS WITH YOUR DEPLOYMENT URL
         // ============================================
-        
-        // IMPORTANT: Replace with your actual Google Apps Script URL
         const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
         
         // ============================================
@@ -630,9 +620,9 @@
                 }
             }
             if (selected.length === 0) {
-                // Fallback to dropdown
-                var dropdown = document.getElementById('termSelect');
-                return [dropdown.value];
+                // Select first term by default
+                selected = ["TERM 1"];
+                checkboxes[0].checked = true;
             }
             return selected;
         }
@@ -673,11 +663,7 @@
                 clearTimeout(timeoutId);
                 
                 if (result && typeof result === 'object') {
-                    if (result.success !== undefined) {
-                        if (successCallback) successCallback(result);
-                    } else {
-                        if (successCallback) successCallback({ success: true, data: result });
-                    }
+                    if (successCallback) successCallback(result);
                 } else {
                     if (errorCallback) {
                         errorCallback('Invalid response format');
@@ -746,6 +732,8 @@
                     classes = result.data;
                 } else if (result.classes && Array.isArray(result.classes)) {
                     classes = result.classes;
+                } else if (result.success && result.data && Array.isArray(result.data)) {
+                    classes = result.data;
                 }
                 
                 classData = classes;
@@ -755,8 +743,9 @@
                     for (var i = 0; i < selects.length; i++) {
                         populateClassSelect(selects[i], classes);
                     }
+                    showAlert('Loaded ' + classes.length + ' classes', 'success');
                 } else {
-                    showAlert('No classes loaded. Please refresh the page.', 'info');
+                    showAlert('No classes loaded. Please check your configuration.', 'error');
                 }
             }, function(error) {
                 hideLoading();
@@ -801,6 +790,8 @@
                     names = result.data;
                 } else if (result.names && Array.isArray(result.names)) {
                     names = result.names;
+                } else if (result.success && result.data && Array.isArray(result.data)) {
+                    names = result.data;
                 }
                 
                 if (names.length > 0) {
@@ -1092,37 +1083,6 @@
         }
         
         // ============================================
-        // TERM CHECKBOX SYNC
-        // ============================================
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            var checkboxes = document.querySelectorAll('.term-checkbox');
-            var dropdown = document.getElementById('termSelect');
-            
-            // When checkbox changes, update dropdown
-            for (var i = 0; i < checkboxes.length; i++) {
-                checkboxes[i].addEventListener('change', function() {
-                    var selected = getSelectedTerms();
-                    if (selected.length === 1) {
-                        dropdown.value = selected[0];
-                    } else if (selected.length > 1) {
-                        dropdown.value = 'MULTIPLE';
-                    }
-                });
-            }
-            
-            // When dropdown changes, update checkboxes
-            dropdown.addEventListener('change', function() {
-                var value = dropdown.value;
-                if (value !== 'MULTIPLE') {
-                    for (var i = 0; i < checkboxes.length; i++) {
-                        checkboxes[i].checked = (checkboxes[i].value === value);
-                    }
-                }
-            });
-        });
-        
-        // ============================================
         // INITIALIZATION
         // ============================================
         
@@ -1142,6 +1102,17 @@
                     }
                 }
             });
+            
+            // Ensure at least one term is always selected
+            var checkboxes = document.querySelectorAll('.term-checkbox');
+            for (var i = 0; i < checkboxes.length; i++) {
+                checkboxes[i].addEventListener('change', function() {
+                    var selected = getSelectedTerms();
+                    if (selected.length === 0) {
+                        this.checked = true;
+                    }
+                });
+            }
         });
         
         // ============================================
