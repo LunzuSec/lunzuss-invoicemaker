@@ -93,7 +93,6 @@
             background: white;
         }
         
-        /* Year Group Card */
         .year-group {
             background: #f8fafc;
             border: 2px solid #e2e8f0;
@@ -195,7 +194,6 @@
             color: #1e40af;
         }
         
-        /* Students inside each year */
         .year-students-section {
             background: white;
             border: 1px solid #e2e8f0;
@@ -366,13 +364,12 @@
         <div class="header">
             <h1>🏫 LUNZU SECONDARY SCHOOL</h1>
             <div class="subtitle">Boarding Fees Invoice Portal</div>
-            <div class="badge">Each Academic Year has its own Students</div>
+            <div class="badge">Each Academic Year loads its own students</div>
         </div>
         
         <div class="content">
             <div id="alert" class="alert"></div>
             
-            <!-- Parent Info -->
             <div>
                 <h3 class="section-title">👤 Parent/Guardian Information</h3>
                 <div class="form-row">
@@ -393,12 +390,10 @@
             
             <div class="divider"></div>
             
-            <!-- Academic Year Groups + Students -->
             <div>
                 <h3 class="section-title">📅 Academic Years, Terms & Students</h3>
                 <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">
-                    Each Academic Year has its own student list below it.  
-                    The <strong>first</strong> year is used to load student names.
+                    Each Academic Year card loads <strong>its own</strong> student list based on the year you select in that card.
                 </p>
                 
                 <div id="yearGroupsContainer"></div>
@@ -431,12 +426,11 @@
             
             <div class="divider"></div>
             <div class="help-section">
-                <strong>💡 How to Use</strong>
+                <strong>💡 How it works now</strong>
                 <ul>
-                    <li>Each Academic Year card contains its own students</li>
-                    <li>Changing the year in the first card reloads student names for all cards</li>
-                    <li>You can add different students under different years if needed</li>
-                    <li>When generating, all students from all years are combined</li>
+                    <li>Each Academic Year card has its own students</li>
+                    <li>Changing the year <strong>inside a card</strong> reloads the student names for that card only</li>
+                    <li>Class + Student Name now listen to the year of their own card</li>
                 </ul>
             </div>
         </div>
@@ -459,13 +453,11 @@
         let availableAcademicYears = ['2025-2026', '2026-2027', '2027-2028', '2028-2029'];
         let defaultAcademicYear = '2026-2027';
         
-        // Cache
         let studentNamesCache = {};
         let classesLoaded = false;
         
         const ALL_TERMS = ['TERM 1', 'TERM 2', 'TERM 3'];
         
-        // ==================== UTILS ====================
         function showAlert(message, type) {
             var alert = document.getElementById('alert');
             alert.className = 'alert alert-' + type + ' show';
@@ -478,7 +470,6 @@
         function showLoading() { document.getElementById('loading').className = 'loading show'; }
         function hideLoading() { document.getElementById('loading').className = 'loading'; }
         
-        // ==================== API ====================
         function callApi(action, params, successCallback, errorCallback, retryCount) {
             retryCount = retryCount || 0;
             var maxRetries = 2;
@@ -541,7 +532,6 @@
             document.body.appendChild(script);
         }
         
-        // ==================== ACADEMIC YEARS ====================
         function loadAcademicYears() {
             callApi('getAcademicYears', {}, function(result) {
                 if (result.success && result.years) {
@@ -575,7 +565,7 @@
             }
         }
         
-        // ==================== YEAR GROUP (with its own students) ====================
+        // ==================== YEAR GROUP ====================
         function addYearGroup(preferredYear) {
             var container = document.getElementById('yearGroupsContainer');
             var id = ++yearGroupCounter;
@@ -613,7 +603,6 @@
                 
                 <div class="year-summary" id="yearSummary_${id}" style="display:none;"></div>
                 
-                <!-- Students for THIS year -->
                 <div class="year-students-section">
                     <div class="year-students-title">
                         <span>👨‍🎓 Students for this Academic Year</span>
@@ -643,10 +632,9 @@
             
             updateYearGroupSummary(id);
             
-            // Automatically add one student row
             setTimeout(function() {
                 addStudent(id);
-            }, 100);
+            }, 120);
         }
         
         function removeYearGroup(id) {
@@ -675,13 +663,30 @@
         function onYearChange(yearGroupId) {
             updateYearGroupSummary(yearGroupId);
 
-            // If this is the first year group → clear cache and refresh ALL student lists
-            var groups = document.querySelectorAll('.year-group');
-            if (groups.length > 0 && String(groups[0].dataset.id) === String(yearGroupId)) {
-                studentNamesCache = {};
-                refreshAllStudentNameSelects(true);
-                showAlert('Student lists updated for the new primary academic year', 'info');
+            // Clear cache for this year and force reload of students inside THIS year group only
+            var group = document.querySelector('.year-group[data-id="' + yearGroupId + '"]');
+            if (!group) return;
+
+            var year = group.querySelector('.year-select').value;
+            
+            // Remove cache entries for this year
+            Object.keys(studentNamesCache).forEach(function(key) {
+                if (key.endsWith('|' + year)) {
+                    delete studentNamesCache[key];
+                }
+            });
+
+            // Reload all student name selects that belong to this year group
+            var nameSelects = group.querySelectorAll('.student-name-select');
+            for (var i = 0; i < nameSelects.length; i++) {
+                var entry = nameSelects[i].closest('.student-entry');
+                var classSelect = entry.querySelector('.student-class-select');
+                if (classSelect && classSelect.value) {
+                    loadStudentNamesForSelect(nameSelects[i], classSelect.value, year, true);
+                }
             }
+
+            showAlert('Student list updated for ' + year, 'info');
         }
         
         function updateYearGroupSummary(yearGroupId) {
@@ -723,16 +728,7 @@
             return yearGroups;
         }
         
-        // ==================== STUDENTS (per year group) ====================
-        function getPrimaryAcademicYear() {
-            var yearGroups = document.querySelectorAll('.year-group');
-            if (yearGroups.length > 0) {
-                var ys = yearGroups[0].querySelector('.year-select');
-                if (ys && ys.value) return ys.value;
-            }
-            return defaultAcademicYear;
-        }
-
+        // ==================== STUDENTS ====================
         function loadClasses() {
             if (classesLoaded && classData.length > 0) return;
 
@@ -748,7 +744,6 @@
                 classData = classes;
                 classesLoaded = true;
 
-                // Populate all existing class selects
                 var selects = document.querySelectorAll('.student-class-select');
                 for (var i = 0; i < selects.length; i++) populateClassSelect(selects[i], classes);
             }, function(error) {
@@ -769,17 +764,18 @@
             if (currentValue) select.value = currentValue;
         }
         
-        function loadStudentNamesForSelect(select, className, force) {
+        // Now accepts the specific academic year of the card
+        function loadStudentNamesForSelect(select, className, academicYear, force) {
             if (!className) {
                 select.innerHTML = '<option value="">Select Student...</option>';
                 return;
             }
 
-            var academicYear = getPrimaryAcademicYear();
-            var cacheKey = className + '|' + academicYear;
+            var year = academicYear || defaultAcademicYear;
+            var cacheKey = className + '|' + year;
 
             if (!force && studentNamesCache[cacheKey]) {
-                fillNameSelect(select, studentNamesCache[cacheKey], academicYear);
+                fillNameSelect(select, studentNamesCache[cacheKey], year);
                 return;
             }
 
@@ -788,7 +784,7 @@
 
             callApi('getStudentNames', { 
                 className: className, 
-                academicYear: academicYear 
+                academicYear: year 
             }, function(result) {
                 select.disabled = false;
                 var names = [];
@@ -798,7 +794,7 @@
                 else if (result.success && result.data && Array.isArray(result.data)) names = result.data;
 
                 studentNamesCache[cacheKey] = names;
-                fillNameSelect(select, names, academicYear);
+                fillNameSelect(select, names, year);
             }, function() {
                 select.disabled = false;
                 select.innerHTML = '<option value="">Error loading</option>';
@@ -823,18 +819,6 @@
                 select.innerHTML = '<option value="">No students found for ' + academicYear + '</option>';
             }
         }
-
-        function refreshAllStudentNameSelects(force) {
-            var selects = document.querySelectorAll('.student-name-select');
-            for (var i = 0; i < selects.length; i++) {
-                var entry = selects[i].closest('.student-entry');
-                if (!entry) continue;
-                var classSelect = entry.querySelector('.student-class-select');
-                if (classSelect && classSelect.value) {
-                    loadStudentNamesForSelect(selects[i], classSelect.value, force);
-                }
-            }
-        }
         
         function onClassChange(studentId, yearGroupId) {
             var entry = document.querySelector('.student-entry[data-id="' + studentId + '"]');
@@ -843,10 +827,14 @@
             var classSelect = entry.querySelector('.student-class-select');
             var nameSelect = entry.querySelector('.student-name-select');
 
+            // Get the academic year of THIS year group
+            var group = document.querySelector('.year-group[data-id="' + yearGroupId + '"]');
+            var year = group ? group.querySelector('.year-select').value : defaultAcademicYear;
+
             nameSelect.value = '';
             nameSelect.innerHTML = '<option value="">Loading...</option>';
 
-            loadStudentNamesForSelect(nameSelect, classSelect.value, false);
+            loadStudentNamesForSelect(nameSelect, classSelect.value, year, false);
         }
         
         function addStudent(yearGroupId) {
@@ -855,7 +843,6 @@
 
             var id = ++studentCounter;
 
-            // Try to pre-select previous class in the same year group
             var previousClass = "";
             var previousEntries = container.querySelectorAll('.student-entry');
             if (previousEntries.length > 0) {
@@ -931,10 +918,9 @@
             }
         }
         
-        // Collect ALL students from ALL year groups
         function getStudentsData() {
             var allStudents = [];
-            var seen = {}; // avoid exact duplicates
+            var seen = {};
 
             var entries = document.querySelectorAll('.student-entry');
             for (var i = 0; i < entries.length; i++) {
@@ -954,7 +940,7 @@
             return allStudents;
         }
         
-        // ==================== EXISTING + GENERATE ====================
+        // ==================== GENERATE ====================
         function checkExisting() {
             var parentName = document.getElementById('parentName').value.trim();
             if (!parentName) { showAlert('Please enter parent name to search', 'error'); return; }
@@ -1022,7 +1008,7 @@
             
             if (!parentName) { showAlert('Please enter parent name', 'error'); return; }
             if (yearGroups.length === 0) { showAlert('Please add at least one academic year with terms', 'error'); return; }
-            if (students.length === 0) { showAlert('Please add at least one student under any year', 'error'); return; }
+            if (students.length === 0) { showAlert('Please add at least one student', 'error'); return; }
             
             hideAlert();
             showLoading();
@@ -1054,7 +1040,6 @@
                             downloadPDF();
                             showAlert('PDF downloaded successfully!', 'success');
                             
-                            // Reset form
                             document.getElementById('yearGroupsContainer').innerHTML = '';
                             yearGroupCounter = 0;
                             studentCounter = 0;
@@ -1093,7 +1078,6 @@
             document.body.removeChild(link);
         }
         
-        // ==================== INIT ====================
         document.addEventListener('DOMContentLoaded', function() {
             loadAcademicYears();
             loadClasses();
@@ -1103,7 +1087,6 @@
             }, 500);
         });
         
-        // Expose
         window.addYearGroup = addYearGroup;
         window.removeYearGroup = removeYearGroup;
         window.onTermChange = onTermChange;
