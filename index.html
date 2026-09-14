@@ -93,12 +93,13 @@
             background: white;
         }
         
+        /* Year Group Card */
         .year-group {
             background: #f8fafc;
             border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 18px;
-            margin-bottom: 15px;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
             position: relative;
         }
         
@@ -106,30 +107,30 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
-            padding-bottom: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
             border-bottom: 1px dashed #cbd5e1;
         }
         
         .year-group-title {
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 700;
             color: #002b54;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
         
         .year-group-number {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 26px;
-            height: 26px;
+            width: 28px;
+            height: 28px;
             background: #002b54;
             color: white;
             border-radius: 50%;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 700;
         }
         
@@ -138,7 +139,7 @@
             color: white;
             border: none;
             border-radius: 6px;
-            padding: 6px 12px;
+            padding: 6px 14px;
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
@@ -150,6 +151,7 @@
             gap: 12px;
             flex-wrap: wrap;
             margin-top: 8px;
+            margin-bottom: 15px;
         }
         
         .term-checkboxes label {
@@ -184,7 +186,8 @@
         }
         
         .year-summary {
-            margin-top: 10px;
+            margin-top: 8px;
+            margin-bottom: 15px;
             padding: 8px 12px;
             background: #eff6ff;
             border-radius: 6px;
@@ -192,43 +195,46 @@
             color: #1e40af;
         }
         
-        .btn-add-year {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 20px;
-            background: #10b981;
-            color: white;
-            border: none;
+        /* Students inside each year */
+        .year-students-section {
+            background: white;
+            border: 1px solid #e2e8f0;
             border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 8px;
+            padding: 15px;
+            margin-top: 10px;
         }
-        .btn-add-year:hover { background: #059669; }
+        
+        .year-students-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #002b54;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
         
         .student-entry {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
             border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
+            padding: 12px;
+            margin-bottom: 10px;
             position: relative;
         }
         
         .student-entry .remove-btn {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 8px;
+            right: 8px;
             background: #ef4444;
             color: white;
             border: none;
             border-radius: 50%;
-            width: 28px;
-            height: 28px;
+            width: 26px;
+            height: 26px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             display: flex;
             align-items: center;
@@ -237,33 +243,46 @@
         }
         .student-entry .remove-btn:hover { background: #dc2626; }
         
-        .btn-group { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
-        
-        .btn {
-            padding: 12px 28px;
+        .btn-add-year {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 22px;
+            background: #10b981;
+            color: white;
             border: none;
             border-radius: 8px;
-            font-size: 15px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+        .btn-add-year:hover { background: #059669; }
+        
+        .btn-group { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             justify-content: center;
         }
         
         .btn-primary { background: #002b54; color: white; }
-        .btn-primary:hover { background: #003d7a; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,43,84,0.3); }
-        .btn-primary:disabled { background: #94a3b8; cursor: not-allowed; transform: none; }
+        .btn-primary:hover { background: #003d7a; }
+        .btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
         
         .btn-success { background: #10b981; color: white; }
-        .btn-success:hover { background: #059669; transform: translateY(-1px); }
-        
         .btn-outline { background: transparent; color: #002b54; border: 2px solid #002b54; }
         .btn-outline:hover { background: #002b54; color: white; }
-        
-        .btn-sm { padding: 8px 16px; font-size: 13px; }
+        .btn-sm { padding: 7px 14px; font-size: 13px; }
         .btn-secondary { background: #64748b; color: white; }
         .btn-secondary:hover { background: #475569; }
         
@@ -331,8 +350,6 @@
         .help-section strong { color: #002b54; display: block; margin-bottom: 5px; }
         .help-section ul { margin-top: 8px; padding-left: 20px; line-height: 1.6; }
         
-        .invoice-count { font-size: 12px; color: #64748b; margin-left: 10px; }
-        
         @media (max-width: 768px) {
             .content { padding: 20px; }
             .header { padding: 20px; }
@@ -341,7 +358,6 @@
             .btn-group { flex-direction: column; }
             .btn { width: 100%; }
             .term-checkboxes { flex-direction: column; }
-            .existing-invoices .invoice-item { flex-direction: column; align-items: flex-start; }
         }
     </style>
 </head>
@@ -350,7 +366,7 @@
         <div class="header">
             <h1>🏫 LUNZU SECONDARY SCHOOL</h1>
             <div class="subtitle">Boarding Fees Invoice Portal</div>
-            <div class="badge">📅 Multi-Academic Year + Fast Cache</div>
+            <div class="badge">Each Academic Year has its own Students</div>
         </div>
         
         <div class="content">
@@ -377,12 +393,12 @@
             
             <div class="divider"></div>
             
-            <!-- Academic Year Groups -->
+            <!-- Academic Year Groups + Students -->
             <div>
-                <h3 class="section-title">📅 Academic Years &amp; Terms</h3>
+                <h3 class="section-title">📅 Academic Years, Terms & Students</h3>
                 <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">
-                    The <strong>first</strong> Academic Year controls which student list is loaded.  
-                    Adding another year will also add a new student row for convenience.
+                    Each Academic Year has its own student list below it.  
+                    The <strong>first</strong> year is used to load student names.
                 </p>
                 
                 <div id="yearGroupsContainer"></div>
@@ -390,22 +406,6 @@
                 <button type="button" class="btn-add-year" onclick="addYearGroup()">
                     ➕ Add Another Academic Year
                 </button>
-            </div>
-            
-            <div class="divider"></div>
-            
-            <!-- Students -->
-            <div>
-                <h3 class="section-title">👨‍🎓 Students <span class="invoice-count" id="studentCount">(0 students)</span></h3>
-                <p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">
-                    Students are shared across all selected academic years.
-                </p>
-                <div id="studentsContainer"></div>
-                
-                <div class="btn-group" style="margin-top:10px;">
-                    <button type="button" class="btn btn-secondary" onclick="addStudent()">➕ Add Student</button>
-                    <button type="button" class="btn btn-outline btn-sm" onclick="clearAllStudents()">🗑️ Clear All</button>
-                </div>
             </div>
             
             <div class="divider"></div>
@@ -433,10 +433,10 @@
             <div class="help-section">
                 <strong>💡 How to Use</strong>
                 <ul>
-                    <li>Set the <strong>first Academic Year</strong> first (this controls the student list)</li>
-                    <li>Add students — changing Class always reloads the correct names</li>
-                    <li>Click “Add Another Academic Year” → a new student row is automatically added</li>
-                    <li>Student names are cached for speed</li>
+                    <li>Each Academic Year card contains its own students</li>
+                    <li>Changing the year in the first card reloads student names for all cards</li>
+                    <li>You can add different students under different years if needed</li>
+                    <li>When generating, all students from all years are combined</li>
                 </ul>
             </div>
         </div>
@@ -448,16 +448,10 @@
     </div>
     
     <script>
-        // ============================================
-        // CONFIGURATION
-        // ============================================
         const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxFcGYfxd80d2-fDL7FuKglFxsdbrtUz2x685C8Kcs5i1Qmg6_vgIEZMRrY741_-ASIAg/exec';
         
-        // ============================================
-        // STATE + CACHE
-        // ============================================
-        let studentCounter = 0;
         let yearGroupCounter = 0;
+        let studentCounter = 0;
         let currentPDFBase64 = null;
         let currentFileName = null;
         let isGenerating = false;
@@ -465,15 +459,13 @@
         let availableAcademicYears = ['2025-2026', '2026-2027', '2027-2028', '2028-2029'];
         let defaultAcademicYear = '2026-2027';
         
-        // Fast cache
-        let studentNamesCache = {};   // key = "className|academicYear"
+        // Cache
+        let studentNamesCache = {};
         let classesLoaded = false;
         
         const ALL_TERMS = ['TERM 1', 'TERM 2', 'TERM 3'];
         
-        // ============================================
-        // UTILS
-        // ============================================
+        // ==================== UTILS ====================
         function showAlert(message, type) {
             var alert = document.getElementById('alert');
             alert.className = 'alert alert-' + type + ' show';
@@ -486,14 +478,7 @@
         function showLoading() { document.getElementById('loading').className = 'loading show'; }
         function hideLoading() { document.getElementById('loading').className = 'loading'; }
         
-        function updateStudentCount() {
-            var students = document.querySelectorAll('.student-entry');
-            document.getElementById('studentCount').textContent = '(' + students.length + ' students)';
-        }
-        
-        // ============================================
-        // JSONP API
-        // ============================================
+        // ==================== API ====================
         function callApi(action, params, successCallback, errorCallback, retryCount) {
             retryCount = retryCount || 0;
             var maxRetries = 2;
@@ -556,9 +541,7 @@
             document.body.appendChild(script);
         }
         
-        // ============================================
-        // ACADEMIC YEARS
-        // ============================================
+        // ==================== ACADEMIC YEARS ====================
         function loadAcademicYears() {
             callApi('getAcademicYears', {}, function(result) {
                 if (result.success && result.years) {
@@ -592,9 +575,7 @@
             }
         }
         
-        // ============================================
-        // YEAR GROUPS
-        // ============================================
+        // ==================== YEAR GROUP (with its own students) ====================
         function addYearGroup(preferredYear) {
             var container = document.getElementById('yearGroupsContainer');
             var id = ++yearGroupCounter;
@@ -612,12 +593,14 @@
                     </div>
                     ${isFirst ? '' : '<button type="button" class="remove-year-btn" onclick="removeYearGroup(' + id + ')">🗑️ Remove Year</button>'}
                 </div>
-                <div class="form-group" style="margin-bottom:10px;">
+                
+                <div class="form-group" style="margin-bottom:8px;">
                     <label>Select Academic Year <span class="required">*</span></label>
                     <select class="year-select" data-id="${id}" onchange="onYearChange(${id})"></select>
                 </div>
+                
                 <div class="form-group" style="margin-bottom:0;">
-                    <label>Select Terms for this Academic Year <span class="required">*</span></label>
+                    <label>Select Terms <span class="required">*</span></label>
                     <div class="term-checkboxes" data-id="${id}">
                         ${ALL_TERMS.map(function(t, idx) {
                             return '<label class="term-label" data-term="' + t + '">' +
@@ -627,7 +610,21 @@
                         }).join('')}
                     </div>
                 </div>
+                
                 <div class="year-summary" id="yearSummary_${id}" style="display:none;"></div>
+                
+                <!-- Students for THIS year -->
+                <div class="year-students-section">
+                    <div class="year-students-title">
+                        <span>👨‍🎓 Students for this Academic Year</span>
+                        <span class="student-count" id="studentCount_${id}">(0)</span>
+                    </div>
+                    <div class="students-container" id="studentsContainer_${id}"></div>
+                    <div class="btn-group" style="margin-top:8px;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="addStudent(${id})">➕ Add Student</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="clearStudents(${id})">🗑️ Clear</button>
+                    </div>
+                </div>
             `;
             
             container.appendChild(div);
@@ -645,14 +642,11 @@
             }
             
             updateYearGroupSummary(id);
-
-            // When adding a SECOND or later year → also add a student row
-            if (!isFirst) {
-                setTimeout(function() {
-                    addStudent();
-                    showAlert('New academic year added + new student row ready', 'info');
-                }, 150);
-            }
+            
+            // Automatically add one student row
+            setTimeout(function() {
+                addStudent(id);
+            }, 100);
         }
         
         function removeYearGroup(id) {
@@ -681,13 +675,12 @@
         function onYearChange(yearGroupId) {
             updateYearGroupSummary(yearGroupId);
 
-            // Force refresh of ALL student name lists when first year changes
+            // If this is the first year group → clear cache and refresh ALL student lists
             var groups = document.querySelectorAll('.year-group');
             if (groups.length > 0 && String(groups[0].dataset.id) === String(yearGroupId)) {
-                // Clear cache for safety
                 studentNamesCache = {};
-                refreshAllStudentNameSelects(true); // force = true
-                showAlert('Student lists updated for new academic year', 'info');
+                refreshAllStudentNameSelects(true);
+                showAlert('Student lists updated for the new primary academic year', 'info');
             }
         }
         
@@ -730,9 +723,7 @@
             return yearGroups;
         }
         
-        // ============================================
-        // CLASSES & STUDENTS + CACHE
-        // ============================================
+        // ==================== STUDENTS (per year group) ====================
         function getPrimaryAcademicYear() {
             var yearGroups = document.querySelectorAll('.year-group');
             if (yearGroups.length > 0) {
@@ -743,12 +734,7 @@
         }
 
         function loadClasses() {
-            if (classesLoaded && classData.length > 0) {
-                // already cached
-                var selects = document.querySelectorAll('.student-class-select');
-                for (var i = 0; i < selects.length; i++) populateClassSelect(selects[i], classData);
-                return;
-            }
+            if (classesLoaded && classData.length > 0) return;
 
             showLoading();
             callApi('getClasses', {}, function(result) {
@@ -762,12 +748,9 @@
                 classData = classes;
                 classesLoaded = true;
 
+                // Populate all existing class selects
                 var selects = document.querySelectorAll('.student-class-select');
                 for (var i = 0; i < selects.length; i++) populateClassSelect(selects[i], classes);
-
-                if (classes.length > 0) {
-                    showAlert('Loaded ' + classes.length + ' classes', 'success');
-                }
             }, function(error) {
                 hideLoading();
                 showAlert('Error loading classes: ' + error, 'error');
@@ -795,7 +778,6 @@
             var academicYear = getPrimaryAcademicYear();
             var cacheKey = className + '|' + academicYear;
 
-            // Use cache if available and not forced
             if (!force && studentNamesCache[cacheKey]) {
                 fillNameSelect(select, studentNamesCache[cacheKey], academicYear);
                 return;
@@ -809,16 +791,13 @@
                 academicYear: academicYear 
             }, function(result) {
                 select.disabled = false;
-
                 var names = [];
                 if (Array.isArray(result)) names = result;
                 else if (result.data && Array.isArray(result.data)) names = result.data;
                 else if (result.names && Array.isArray(result.names)) names = result.names;
                 else if (result.success && result.data && Array.isArray(result.data)) names = result.data;
 
-                // Save to cache
                 studentNamesCache[cacheKey] = names;
-
                 fillNameSelect(select, names, academicYear);
             }, function() {
                 select.disabled = false;
@@ -846,18 +825,19 @@
         }
 
         function refreshAllStudentNameSelects(force) {
-            var entries = document.querySelectorAll('.student-entry');
-            for (var i = 0; i < entries.length; i++) {
-                var classSelect = entries[i].querySelector('.student-class-select');
-                var nameSelect = entries[i].querySelector('.student-name-select');
-                if (classSelect && nameSelect && classSelect.value) {
-                    loadStudentNamesForSelect(nameSelect, classSelect.value, force);
+            var selects = document.querySelectorAll('.student-name-select');
+            for (var i = 0; i < selects.length; i++) {
+                var entry = selects[i].closest('.student-entry');
+                if (!entry) continue;
+                var classSelect = entry.querySelector('.student-class-select');
+                if (classSelect && classSelect.value) {
+                    loadStudentNamesForSelect(selects[i], classSelect.value, force);
                 }
             }
         }
         
-        function onClassChange(id) {
-            var entry = document.querySelector('.student-entry[data-id="' + id + '"]');
+        function onClassChange(studentId, yearGroupId) {
+            var entry = document.querySelector('.student-entry[data-id="' + studentId + '"]');
             if (!entry) return;
 
             var classSelect = entry.querySelector('.student-class-select');
@@ -869,12 +849,15 @@
             loadStudentNamesForSelect(nameSelect, classSelect.value, false);
         }
         
-        function addStudent() {
-            var container = document.getElementById('studentsContainer');
+        function addStudent(yearGroupId) {
+            var container = document.getElementById('studentsContainer_' + yearGroupId);
+            if (!container) return;
+
             var id = ++studentCounter;
 
+            // Try to pre-select previous class in the same year group
             var previousClass = "";
-            var previousEntries = document.querySelectorAll('.student-entry');
+            var previousEntries = container.querySelectorAll('.student-entry');
             if (previousEntries.length > 0) {
                 var lastClassSelect = previousEntries[previousEntries.length - 1]
                     .querySelector('.student-class-select');
@@ -886,12 +869,13 @@
             var div = document.createElement('div');
             div.className = 'student-entry';
             div.dataset.id = id;
+            div.dataset.yearGroup = yearGroupId;
 
             div.innerHTML = `
-                <button type="button" class="remove-btn" onclick="removeStudent(${id})">×</button>
+                <button type="button" class="remove-btn" onclick="removeStudent(${id}, ${yearGroupId})">×</button>
                 <div class="form-row">
                     <div class="form-group" style="margin-bottom:0;">
-                        <label>Student Class <span class="required">*</span></label>
+                        <label>Class <span class="required">*</span></label>
                         <select class="student-class-select" data-id="${id}">
                             <option value="">Select Class...</option>
                         </select>
@@ -911,47 +895,66 @@
             populateClassSelect(classSelect, classData);
 
             classSelect.addEventListener('change', function() {
-                onClassChange(id);
+                onClassChange(id, yearGroupId);
             });
 
             if (previousClass) {
                 classSelect.value = previousClass;
-                onClassChange(id);
+                onClassChange(id, yearGroupId);
             }
 
-            updateStudentCount();
+            updateStudentCount(yearGroupId);
         }
         
-        function removeStudent(id) {
-            var entry = document.querySelector('.student-entry[data-id="' + id + '"]');
-            if (entry) { 
-                entry.remove(); 
-                updateStudentCount(); 
+        function removeStudent(studentId, yearGroupId) {
+            var entry = document.querySelector('.student-entry[data-id="' + studentId + '"]');
+            if (entry) {
+                entry.remove();
+                updateStudentCount(yearGroupId);
             }
         }
         
-        function clearAllStudents() {
-            document.getElementById('studentsContainer').innerHTML = '';
-            studentCounter = 0;
-            updateStudentCount();
+        function clearStudents(yearGroupId) {
+            var container = document.getElementById('studentsContainer_' + yearGroupId);
+            if (container) {
+                container.innerHTML = '';
+                updateStudentCount(yearGroupId);
+            }
         }
         
+        function updateStudentCount(yearGroupId) {
+            var container = document.getElementById('studentsContainer_' + yearGroupId);
+            var countEl = document.getElementById('studentCount_' + yearGroupId);
+            if (container && countEl) {
+                var count = container.querySelectorAll('.student-entry').length;
+                countEl.textContent = '(' + count + ')';
+            }
+        }
+        
+        // Collect ALL students from ALL year groups
         function getStudentsData() {
+            var allStudents = [];
+            var seen = {}; // avoid exact duplicates
+
             var entries = document.querySelectorAll('.student-entry');
-            var students = [];
             for (var i = 0; i < entries.length; i++) {
                 var classSelect = entries[i].querySelector('.student-class-select');
                 var nameSelect = entries[i].querySelector('.student-name-select');
-                if (classSelect.value && nameSelect.value) {
-                    students.push({ name: nameSelect.value, class: classSelect.value });
+                if (classSelect && nameSelect && classSelect.value && nameSelect.value) {
+                    var key = nameSelect.value + '|' + classSelect.value;
+                    if (!seen[key]) {
+                        seen[key] = true;
+                        allStudents.push({ 
+                            name: nameSelect.value, 
+                            class: classSelect.value 
+                        });
+                    }
                 }
             }
-            return students;
+            return allStudents;
         }
         
-        // ============================================
-        // EXISTING INVOICES + GENERATE
-        // ============================================
+        // ==================== EXISTING + GENERATE ====================
         function checkExisting() {
             var parentName = document.getElementById('parentName').value.trim();
             if (!parentName) { showAlert('Please enter parent name to search', 'error'); return; }
@@ -1019,14 +1022,7 @@
             
             if (!parentName) { showAlert('Please enter parent name', 'error'); return; }
             if (yearGroups.length === 0) { showAlert('Please add at least one academic year with terms', 'error'); return; }
-            if (students.length === 0) { showAlert('Please add at least one student', 'error'); return; }
-            
-            for (var i = 0; i < students.length; i++) {
-                if (!students[i].class || !students[i].name) {
-                    showAlert('Please complete all student information', 'error');
-                    return;
-                }
-            }
+            if (students.length === 0) { showAlert('Please add at least one student under any year', 'error'); return; }
             
             hideAlert();
             showLoading();
@@ -1058,12 +1054,10 @@
                             downloadPDF();
                             showAlert('PDF downloaded successfully!', 'success');
                             
-                            // Reset
-                            document.getElementById('studentsContainer').innerHTML = '';
-                            studentCounter = 0;
-                            updateStudentCount();
+                            // Reset form
                             document.getElementById('yearGroupsContainer').innerHTML = '';
                             yearGroupCounter = 0;
+                            studentCounter = 0;
                             addYearGroup();
                             document.getElementById('parentName').value = '';
                             document.getElementById('parentPhone').value = '';
@@ -1099,17 +1093,14 @@
             document.body.removeChild(link);
         }
         
-        // ============================================
-        // INIT
-        // ============================================
+        // ==================== INIT ====================
         document.addEventListener('DOMContentLoaded', function() {
             loadAcademicYears();
             loadClasses();
             
             setTimeout(function() {
                 addYearGroup(defaultAcademicYear);
-                addStudent();
-            }, 600);
+            }, 500);
         });
         
         // Expose
@@ -1117,22 +1108,13 @@
         window.removeYearGroup = removeYearGroup;
         window.onTermChange = onTermChange;
         window.onYearChange = onYearChange;
-        window.updateYearGroupSummary = updateYearGroupSummary;
-        window.getYearGroupsData = getYearGroupsData;
-        
         window.addStudent = addStudent;
         window.removeStudent = removeStudent;
-        window.onClassChange = onClassChange;
-        window.clearAllStudents = clearAllStudents;
-        window.getStudentsData = getStudentsData;
-        window.refreshAllStudentNameSelects = refreshAllStudentNameSelects;
-        
+        window.clearStudents = clearStudents;
         window.checkExisting = checkExisting;
         window.generateAndDownload = generateAndDownload;
         window.downloadInvoice = downloadInvoice;
         window.downloadPDF = downloadPDF;
-        window.loadClasses = loadClasses;
-        window.loadAcademicYears = loadAcademicYears;
     </script>
 </body>
 </html>
