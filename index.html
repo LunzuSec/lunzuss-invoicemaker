@@ -399,7 +399,7 @@
             <div>
                 <h3 class="section-title">👨‍🎓 Students <span class="invoice-count" id="studentCount">(0 students)</span></h3>
                 <p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">
-                    Students are shared across all selected academic years.
+                    Students are shared across all selected academic years. Changing the <strong>first</strong> Academic Year will reload the student lists.
                 </p>
                 <div id="studentsContainer"></div>
                 
@@ -436,7 +436,7 @@
                 <ul>
                     <li>Enter the <strong>Parent/Guardian</strong> details</li>
                     <li>Add <strong>Academic Year(s)</strong> — e.g., 2025-2026 with TERM 1, 2, 3 and 2026-2027 with TERM 1, 2, 3</li>
-                    <li>Add <strong>students</strong> (shared across all years)</li>
+                    <li>Add <strong>students</strong> (shared across all years). The first Academic Year controls which student list is loaded.</li>
                     <li>Click <strong>Generate Invoice</strong> — each academic year gets its own <strong>separate table</strong> with subtotal</li>
                     <li>A <strong>Grand Total</strong> is shown at the bottom including previous balances</li>
                 </ul>
@@ -615,7 +615,7 @@
                 </div>
                 <div class="form-group" style="margin-bottom:10px;">
                     <label>Select Academic Year <span class="required">*</span></label>
-                    <select class="year-select" data-id="${id}" onchange="updateYearGroupSummary(${id})">
+                    <select class="year-select" data-id="${id}" onchange="onYearChange(${id})">
                     </select>
                 </div>
                 <div class="form-group" style="margin-bottom:0;">
@@ -676,6 +676,16 @@
             updateYearGroupSummary(yearGroupId);
         }
         
+        function onYearChange(yearGroupId) {
+            updateYearGroupSummary(yearGroupId);
+
+            // If this is the first year group, refresh all student name lists
+            var groups = document.querySelectorAll('.year-group');
+            if (groups.length > 0 && groups[0].dataset.id == yearGroupId) {
+                refreshAllStudentNameSelects();
+            }
+        }
+        
         function updateYearGroupSummary(yearGroupId) {
             var group = document.querySelector('.year-group[data-id="' + yearGroupId + '"]');
             if (!group) return;
@@ -721,6 +731,15 @@
         // ============================================
         // CLASSES & STUDENTS
         // ============================================
+        function getPrimaryAcademicYear() {
+            var yearGroups = document.querySelectorAll('.year-group');
+            if (yearGroups.length > 0) {
+                var ys = yearGroups[0].querySelector('.year-select');
+                if (ys && ys.value) return ys.value;
+            }
+            return defaultAcademicYear;
+        }
+
         function loadClasses() {
             showLoading();
             callApi('getClasses', {}, function(result) {
@@ -767,15 +786,12 @@
             select.innerHTML = '<option value="">Loading...</option>';
             select.disabled = true;
             
-            // Use first year group's academic year
-            var yearGroups = document.querySelectorAll('.year-group');
-            var academicYear = defaultAcademicYear;
-            if (yearGroups.length > 0) {
-                var ys = yearGroups[0].querySelector('.year-select');
-                if (ys && ys.value) academicYear = ys.value;
-            }
+            var academicYear = getPrimaryAcademicYear();
             
-            callApi('getStudentNames', { className: className, academicYear: academicYear }, function(result) {
+            callApi('getStudentNames', { 
+                className: className, 
+                academicYear: academicYear 
+            }, function(result) {
                 select.disabled = false;
                 select.innerHTML = '<option value="">Select Student...</option>';
                 
@@ -794,17 +810,36 @@
                     }
                     if (currentValue) select.value = currentValue;
                 } else {
-                    select.innerHTML = '<option value="">No students found</option>';
+                    select.innerHTML = '<option value="">No students found for ' + academicYear + '</option>';
                 }
             }, function(error) {
                 select.disabled = false;
                 select.innerHTML = '<option value="">Error loading</option>';
             });
         }
+
+        function refreshAllStudentNameSelects() {
+            var entries = document.querySelectorAll('.student-entry');
+            for (var i = 0; i < entries.length; i++) {
+                var classSelect = entries[i].querySelector('.student-class-select');
+                var nameSelect = entries[i].querySelector('.student-name-select');
+                if (classSelect && nameSelect && classSelect.value) {
+                    loadStudentNamesForSelect(nameSelect, classSelect.value);
+                }
+            }
+        }
         
         function addStudent() {
             var container = document.getElementById('studentsContainer');
             var id = ++studentCounter;
+            
+            // Pre-select the same class as the previous student (makes adding siblings much faster)
+            var previousClass = "";
+            var previousEntries = document.querySelectorAll('.student-entry');
+            if (previousEntries.length > 0) {
+                var lastClassSelect = previousEntries[previousEntries.length - 1].querySelector('.student-class-select');
+                if (lastClassSelect) previousClass = lastClassSelect.value;
+            }
             
             var div = document.createElement('div');
             div.className = 'student-entry';
@@ -830,6 +865,12 @@
             
             var classSelect = div.querySelector('.student-class-select');
             populateClassSelect(classSelect, classData);
+            
+            if (previousClass) {
+                classSelect.value = previousClass;
+                onClassChange(id);   // automatically load names for the same class
+            }
+            
             updateStudentCount();
         }
         
@@ -1037,6 +1078,7 @@
         window.addYearGroup = addYearGroup;
         window.removeYearGroup = removeYearGroup;
         window.onTermChange = onTermChange;
+        window.onYearChange = onYearChange;
         window.updateYearGroupSummary = updateYearGroupSummary;
         window.getYearGroupsData = getYearGroupsData;
         
@@ -1045,6 +1087,7 @@
         window.onClassChange = onClassChange;
         window.clearAllStudents = clearAllStudents;
         window.getStudentsData = getStudentsData;
+        window.refreshAllStudentNameSelects = refreshAllStudentNameSelects;
         
         window.checkExisting = checkExisting;
         window.generateAndDownload = generateAndDownload;
