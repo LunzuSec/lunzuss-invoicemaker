@@ -284,20 +284,44 @@
         .btn-secondary { background: #64748b; color: white; }
         .btn-secondary:hover { background: #475569; }
         
-        .loading { display: none; text-align: center; padding: 20px; }
-        .loading.show { display: block; }
+        /* Strong full-screen loading */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 43, 84, 0.78);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+            font-size: 16px;
+        }
+        .loading.show { display: flex; }
         
         .spinner {
             display: inline-block;
-            width: 40px;
-            height: 40px;
-            border: 4px solid #e2e8f0;
-            border-top: 4px solid #002b54;
+            width: 52px;
+            height: 52px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-top: 5px solid #fbbf24;
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            animation: spin 0.7s linear infinite;
+            margin-bottom: 18px;
         }
         
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .loading-text {
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-align: center;
+            max-width: 300px;
+            line-height: 1.4;
+        }
         
         .existing-invoices {
             margin-top: 15px;
@@ -414,9 +438,10 @@
                 </button>
             </div>
             
+            <!-- Strong loading overlay -->
             <div id="loading" class="loading">
                 <div class="spinner"></div>
-                <p style="margin-top:10px;color:#64748b;">Generating your invoice...</p>
+                <div class="loading-text" id="loadingText">Generating your invoice...</div>
             </div>
             
             <div id="existingInvoices" class="existing-invoices">
@@ -426,11 +451,11 @@
             
             <div class="divider"></div>
             <div class="help-section">
-                <strong>💡 How it works now</strong>
+                <strong>💡 How it works</strong>
                 <ul>
                     <li>Each Academic Year card has its own students</li>
-                    <li>Changing the year <strong>inside a card</strong> reloads the student names for that card only</li>
-                    <li>Class + Student Name now listen to the year of their own card</li>
+                    <li>Changing the year inside a card reloads the student names for that card only</li>
+                    <li>When you click Generate you will see a full-screen loading overlay</li>
                 </ul>
             </div>
         </div>
@@ -463,12 +488,21 @@
             alert.className = 'alert alert-' + type + ' show';
             alert.textContent = message;
             clearTimeout(alert._timeout);
-            alert._timeout = setTimeout(function() { alert.className = 'alert'; }, 8000);
+            alert._timeout = setTimeout(function() { alert.className = 'alert'; }, 9000);
         }
         
         function hideAlert() { document.getElementById('alert').className = 'alert'; }
-        function showLoading() { document.getElementById('loading').className = 'loading show'; }
-        function hideLoading() { document.getElementById('loading').className = 'loading'; }
+        
+        function showLoading(message) {
+            var el = document.getElementById('loading');
+            var text = document.getElementById('loadingText');
+            if (text) text.textContent = message || 'Please wait...';
+            el.className = 'loading show';
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').className = 'loading';
+        }
         
         function callApi(action, params, successCallback, errorCallback, retryCount) {
             retryCount = retryCount || 0;
@@ -510,7 +544,7 @@
                 if (retryCount < maxRetries) {
                     setTimeout(function() {
                         callApi(action, params, successCallback, errorCallback, retryCount + 1);
-                    }, 600 * (retryCount + 1));
+                    }, 700 * (retryCount + 1));
                 } else {
                     if (errorCallback) errorCallback('Request failed');
                 }
@@ -523,11 +557,11 @@
                 if (retryCount < maxRetries) {
                     setTimeout(function() {
                         callApi(action, params, successCallback, errorCallback, retryCount + 1);
-                    }, 600 * (retryCount + 1));
+                    }, 700 * (retryCount + 1));
                 } else {
                     if (errorCallback) errorCallback('Timeout');
                 }
-            }, 18000);
+            }, 20000);
             
             document.body.appendChild(script);
         }
@@ -663,20 +697,19 @@
         function onYearChange(yearGroupId) {
             updateYearGroupSummary(yearGroupId);
 
-            // Clear cache for this year and force reload of students inside THIS year group only
             var group = document.querySelector('.year-group[data-id="' + yearGroupId + '"]');
             if (!group) return;
 
             var year = group.querySelector('.year-select').value;
             
-            // Remove cache entries for this year
+            // Clear cache for this year
             Object.keys(studentNamesCache).forEach(function(key) {
                 if (key.endsWith('|' + year)) {
                     delete studentNamesCache[key];
                 }
             });
 
-            // Reload all student name selects that belong to this year group
+            // Reload student names inside this year group only
             var nameSelects = group.querySelectorAll('.student-name-select');
             for (var i = 0; i < nameSelects.length; i++) {
                 var entry = nameSelects[i].closest('.student-entry');
@@ -732,7 +765,7 @@
         function loadClasses() {
             if (classesLoaded && classData.length > 0) return;
 
-            showLoading();
+            showLoading('Loading classes...');
             callApi('getClasses', {}, function(result) {
                 hideLoading();
                 var classes = [];
@@ -764,7 +797,6 @@
             if (currentValue) select.value = currentValue;
         }
         
-        // Now accepts the specific academic year of the card
         function loadStudentNamesForSelect(select, className, academicYear, force) {
             if (!className) {
                 select.innerHTML = '<option value="">Select Student...</option>';
@@ -827,7 +859,6 @@
             var classSelect = entry.querySelector('.student-class-select');
             var nameSelect = entry.querySelector('.student-name-select');
 
-            // Get the academic year of THIS year group
             var group = document.querySelector('.year-group[data-id="' + yearGroupId + '"]');
             var year = group ? group.querySelector('.year-select').value : defaultAcademicYear;
 
@@ -945,7 +976,7 @@
             var parentName = document.getElementById('parentName').value.trim();
             if (!parentName) { showAlert('Please enter parent name to search', 'error'); return; }
             
-            showLoading();
+            showLoading('Searching invoices...');
             callApi('getInvoicesByParent', { parentName: parentName }, function(result) {
                 hideLoading();
                 var container = document.getElementById('existingInvoices');
@@ -981,7 +1012,7 @@
         }
         
         function downloadInvoice(invoiceNumber) {
-            showLoading();
+            showLoading('Downloading PDF...');
             callApi('getInvoicePDF', { invoiceNumber: invoiceNumber }, function(result) {
                 hideLoading();
                 if (result.success && result.pdfBase64) {
@@ -1006,15 +1037,38 @@
             var yearGroups = getYearGroupsData();
             var students = getStudentsData();
             
-            if (!parentName) { showAlert('Please enter parent name', 'error'); return; }
-            if (yearGroups.length === 0) { showAlert('Please add at least one academic year with terms', 'error'); return; }
-            if (students.length === 0) { showAlert('Please add at least one student', 'error'); return; }
+            if (!parentName) { 
+                showAlert('Please enter parent name', 'error'); 
+                return; 
+            }
+            if (yearGroups.length === 0) { 
+                showAlert('Please add at least one academic year with terms', 'error'); 
+                return; 
+            }
+            if (students.length === 0) { 
+                showAlert('Please add at least one student', 'error'); 
+                return; 
+            }
             
             hideAlert();
-            showLoading();
             isGenerating = true;
-            document.getElementById('generateBtn').disabled = true;
-            document.getElementById('generateBtn').innerHTML = '⏳ Generating...';
+            
+            var btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Generating...';
+            
+            showLoading('Creating invoice... Please wait');
+            
+            // Safety timeout
+            var safetyTimeout = setTimeout(function() {
+                if (isGenerating) {
+                    isGenerating = false;
+                    btn.disabled = false;
+                    btn.innerHTML = '📄 Generate Invoice (PDF)';
+                    hideLoading();
+                    showAlert('Request timed out. Please try again.', 'error');
+                }
+            }, 50000);
             
             var studentsParam = students.map(function(s) { return s.name + '|' + s.class; }).join(',');
             var yearGroupsParam = yearGroups.join('|');
@@ -1027,19 +1081,22 @@
                 yearGroups: yearGroupsParam
             }, function(result) {
                 if (result.success) {
-                    showAlert('Invoice generated: ' + result.invoice.invoiceNumber, 'success');
+                    showLoading('Invoice created. Now generating PDF...');
+                    
                     callApi('getInvoicePDF', { invoiceNumber: result.invoice.invoiceNumber }, function(pdfResult) {
+                        clearTimeout(safetyTimeout);
                         hideLoading();
                         isGenerating = false;
-                        document.getElementById('generateBtn').disabled = false;
-                        document.getElementById('generateBtn').innerHTML = '📄 Generate Invoice (PDF)';
+                        btn.disabled = false;
+                        btn.innerHTML = '📄 Generate Invoice (PDF)';
                         
                         if (pdfResult.success && pdfResult.pdfBase64) {
                             currentPDFBase64 = pdfResult.pdfBase64;
                             currentFileName = pdfResult.fileName || 'invoice.pdf';
                             downloadPDF();
-                            showAlert('PDF downloaded successfully!', 'success');
+                            showAlert('PDF downloaded successfully! Invoice: ' + result.invoice.invoiceNumber, 'success');
                             
+                            // Reset form
                             document.getElementById('yearGroupsContainer').innerHTML = '';
                             yearGroupCounter = 0;
                             studentCounter = 0;
@@ -1049,22 +1106,31 @@
                             document.getElementById('parentEmail').value = '';
                             document.getElementById('existingInvoices').className = 'existing-invoices';
                         } else {
-                            showAlert('Failed to generate PDF: ' + (pdfResult.error || 'Unknown'), 'error');
+                            showAlert('Failed to generate PDF: ' + (pdfResult.error || 'Unknown error'), 'error');
                         }
+                    }, function(error) {
+                        clearTimeout(safetyTimeout);
+                        hideLoading();
+                        isGenerating = false;
+                        btn.disabled = false;
+                        btn.innerHTML = '📄 Generate Invoice (PDF)';
+                        showAlert('PDF generation failed: ' + error, 'error');
                     });
                 } else {
+                    clearTimeout(safetyTimeout);
                     hideLoading();
                     isGenerating = false;
-                    document.getElementById('generateBtn').disabled = false;
-                    document.getElementById('generateBtn').innerHTML = '📄 Generate Invoice (PDF)';
-                    showAlert('Failed: ' + (result.error || 'Unknown'), 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '📄 Generate Invoice (PDF)';
+                    showAlert('Failed to create invoice: ' + (result.error || 'Unknown error'), 'error');
                 }
             }, function(error) {
+                clearTimeout(safetyTimeout);
                 hideLoading();
                 isGenerating = false;
-                document.getElementById('generateBtn').disabled = false;
-                document.getElementById('generateBtn').innerHTML = '📄 Generate Invoice (PDF)';
-                showAlert('Error: ' + error, 'error');
+                btn.disabled = false;
+                btn.innerHTML = '📄 Generate Invoice (PDF)';
+                showAlert('Network error: ' + error, 'error');
             });
         }
         
