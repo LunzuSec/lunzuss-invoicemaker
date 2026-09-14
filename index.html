@@ -435,10 +435,10 @@
                 <strong>💡 How to Use</strong>
                 <ul>
                     <li>Enter the <strong>Parent/Guardian</strong> details</li>
-                    <li>Add <strong>Academic Year(s)</strong> — e.g., 2025-2026 with TERM 1, 2, 3 and 2026-2027 with TERM 1, 2, 3</li>
-                    <li>Add <strong>students</strong> (shared across all years). The first Academic Year controls which student list is loaded.</li>
-                    <li>Click <strong>Generate Invoice</strong> — each academic year gets its own <strong>separate table</strong> with subtotal</li>
-                    <li>A <strong>Grand Total</strong> is shown at the bottom including previous balances</li>
+                    <li>Add <strong>Academic Year(s)</strong> — the first year controls which student list is loaded</li>
+                    <li>Add <strong>students</strong>. Clicking “Add Student” keeps the same class as the previous one</li>
+                    <li>Changing the Class dropdown always reloads the correct student names</li>
+                    <li>Click <strong>Generate Invoice</strong> — each academic year gets its own separate table</li>
                 </ul>
             </div>
         </div>
@@ -635,7 +635,6 @@
             
             container.appendChild(div);
             
-            // Populate year select
             var yearSelect = div.querySelector('.year-select');
             populateYearSelect(yearSelect);
             
@@ -643,7 +642,6 @@
                 yearSelect.value = preferredYear;
             }
             
-            // Mark initial checked
             var checkedLabels = div.querySelectorAll('.term-label input:checked');
             for (var i = 0; i < checkedLabels.length; i++) {
                 checkedLabels[i].parentElement.classList.add('checked');
@@ -672,14 +670,13 @@
             var label = checkbox.parentElement;
             if (checkbox.checked) label.classList.add('checked');
             else label.classList.remove('checked');
-            
             updateYearGroupSummary(yearGroupId);
         }
         
         function onYearChange(yearGroupId) {
             updateYearGroupSummary(yearGroupId);
 
-            // If this is the first year group, refresh all student name lists
+            // If this is the first year group → refresh all student name lists
             var groups = document.querySelectorAll('.year-group');
             if (groups.length > 0 && groups[0].dataset.id == yearGroupId) {
                 refreshAllStudentNameSelects();
@@ -781,26 +778,26 @@
                 select.innerHTML = '<option value="">Select Student...</option>';
                 return;
             }
-            
+
             var currentValue = select.value;
             select.innerHTML = '<option value="">Loading...</option>';
             select.disabled = true;
-            
+
             var academicYear = getPrimaryAcademicYear();
-            
+
             callApi('getStudentNames', { 
                 className: className, 
                 academicYear: academicYear 
             }, function(result) {
                 select.disabled = false;
                 select.innerHTML = '<option value="">Select Student...</option>';
-                
+
                 var names = [];
                 if (Array.isArray(result)) names = result;
                 else if (result.data && Array.isArray(result.data)) names = result.data;
                 else if (result.names && Array.isArray(result.names)) names = result.names;
                 else if (result.success && result.data && Array.isArray(result.data)) names = result.data;
-                
+
                 if (names.length > 0) {
                     for (var i = 0; i < names.length; i++) {
                         var opt = document.createElement('option');
@@ -808,7 +805,10 @@
                         opt.textContent = names[i];
                         select.appendChild(opt);
                     }
-                    if (currentValue) select.value = currentValue;
+                    // Only restore previous value if it still exists in the new list
+                    if (currentValue && names.indexOf(currentValue) !== -1) {
+                        select.value = currentValue;
+                    }
                 } else {
                     select.innerHTML = '<option value="">No students found for ' + academicYear + '</option>';
                 }
@@ -829,27 +829,45 @@
             }
         }
         
+        function onClassChange(id) {
+            var entry = document.querySelector('.student-entry[data-id="' + id + '"]');
+            if (!entry) return;
+
+            var classSelect = entry.querySelector('.student-class-select');
+            var nameSelect = entry.querySelector('.student-name-select');
+
+            // Clear previous selection when class changes
+            nameSelect.value = '';
+            nameSelect.innerHTML = '<option value="">Loading...</option>';
+
+            loadStudentNamesForSelect(nameSelect, classSelect.value);
+        }
+        
         function addStudent() {
             var container = document.getElementById('studentsContainer');
             var id = ++studentCounter;
-            
-            // Pre-select the same class as the previous student (makes adding siblings much faster)
+
+            // Get the class of the last student (if any)
             var previousClass = "";
             var previousEntries = document.querySelectorAll('.student-entry');
             if (previousEntries.length > 0) {
-                var lastClassSelect = previousEntries[previousEntries.length - 1].querySelector('.student-class-select');
-                if (lastClassSelect) previousClass = lastClassSelect.value;
+                var lastClassSelect = previousEntries[previousEntries.length - 1]
+                    .querySelector('.student-class-select');
+                if (lastClassSelect && lastClassSelect.value) {
+                    previousClass = lastClassSelect.value;
+                }
             }
-            
+
             var div = document.createElement('div');
             div.className = 'student-entry';
             div.dataset.id = id;
+
             div.innerHTML = `
                 <button type="button" class="remove-btn" onclick="removeStudent(${id})">×</button>
                 <div class="form-row">
                     <div class="form-group" style="margin-bottom:0;">
                         <label>Student Class <span class="required">*</span></label>
-                        <select class="student-class-select" data-id="${id}" onchange="onClassChange(${id})">
+                        <select class="student-class-select" data-id="${id}">
                             <option value="">Select Class...</option>
                         </select>
                     </div>
@@ -861,30 +879,32 @@
                     </div>
                 </div>
             `;
+
             container.appendChild(div);
-            
+
             var classSelect = div.querySelector('.student-class-select');
+            var nameSelect = div.querySelector('.student-name-select');
+
+            // Populate classes
             populateClassSelect(classSelect, classData);
-            
+
+            // Attach change event (more reliable than inline onchange)
+            classSelect.addEventListener('change', function() {
+                onClassChange(id);
+            });
+
+            // Pre-select previous class and load names
             if (previousClass) {
                 classSelect.value = previousClass;
-                onClassChange(id);   // automatically load names for the same class
+                onClassChange(id);
             }
-            
+
             updateStudentCount();
         }
         
         function removeStudent(id) {
             var entry = document.querySelector('.student-entry[data-id="' + id + '"]');
             if (entry) { entry.remove(); updateStudentCount(); }
-        }
-        
-        function onClassChange(id) {
-            var entry = document.querySelector('.student-entry[data-id="' + id + '"]');
-            if (!entry) return;
-            var classSelect = entry.querySelector('.student-class-select');
-            var nameSelect = entry.querySelector('.student-name-select');
-            loadStudentNamesForSelect(nameSelect, classSelect.value);
         }
         
         function clearAllStudents() {
@@ -1067,9 +1087,7 @@
             loadClasses();
             
             setTimeout(function() {
-                // Add first year group
                 addYearGroup(defaultAcademicYear);
-                // Add first student
                 addStudent();
             }, 800);
         });
