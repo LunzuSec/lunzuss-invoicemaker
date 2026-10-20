@@ -550,10 +550,10 @@
                 <ul>
                     <li>Select the <strong>Academic Year</strong> first</li>
                     <li>Choose the <strong>Terms</strong> you want to invoice</li>
-                    <li>Pick a <strong>Balance Display Mode</strong> (default: Include Both)</li>
+                    <li>Pick a <strong>Balance Display Mode</strong> — applies to <strong>new invoices only</strong></li>
                     <li>Add students — changing Class reloads the correct names</li>
                     <li>Click <strong>Generate</strong> to create and download the PDF</li>
-                    <li>Use <strong>Check Existing Invoices</strong> to manage past invoices</li>
+                    <li>Use <strong>Check Existing Invoices</strong> to see each invoice's stored mode badge</li>
                 </ul>
             </div>
         </div>
@@ -604,7 +604,7 @@
             <p style="font-size:13px;color:#64748b;margin-bottom:16px;" id="editInvoiceInfo"></p>
             
             <p style="font-size:11px;color:#92400e;background:#fef3c7;padding:8px 10px;border-radius:6px;margin-bottom:14px;">
-                💡 <strong>Note:</strong> Students, terms, fees and academic year cannot be edited here. 
+                💡 <strong>Note:</strong> Students, terms, fees, academic year and balance mode cannot be edited here. 
                 To change those, delete this invoice and regenerate.
             </p>
             
@@ -1185,7 +1185,7 @@
         }
         
         // ============================================
-        // CHECK EXISTING INVOICES
+        // CHECK EXISTING INVOICES — shows each invoice's stored mode
         // ============================================
         function checkExisting() {
             var parentName = document.getElementById('parentName').value.trim();
@@ -1207,6 +1207,14 @@
                 
                 if (result.success && result.invoices && result.invoices.length > 0) {
                     list.innerHTML = '';
+                    
+                    var modeLabels = {
+                        include_both: '✅ Include Both',
+                        ignore_bf:    '🚫 Ignore B/F',
+                        ignore_paid:  '🚫 Ignore Paid',
+                        ignore_both:  '🚫 Ignore Both'
+                    };
+                    
                     for (var i = 0; i < result.invoices.length; i++) {
                         var inv = result.invoices[i];
                         var statusKey = (inv.status || 'UNPAID').toLowerCase().replace(' ', '');
@@ -1216,13 +1224,17 @@
                         var balance = inv.totalBalance || 0;
                         var owedAmount = Math.abs(balance);
                         
+                        // Show the stored mode of this specific invoice
+                        var storedMode = inv.mode || 'include_both';
+                        var modeBadge = '<span style="display:inline-block;font-size:10px;padding:1px 6px;background:#e0e7ff;color:#3730a3;border-radius:3px;margin-left:6px;vertical-align:middle;">' + (modeLabels[storedMode] || storedMode) + '</span>';
+                        
                         var div = document.createElement('div');
                         div.className = 'invoice-item';
                         div.innerHTML = `
                             <span><strong>${inv.invoiceNumber}</strong><br>${inv.issueDate}</span>
                             <span>${inv.terms || ''}<br>(${inv.academicYear || ''})</span>
                             <span>${inv.studentList || 'N/A'}</span>
-                            <span>Due: <strong>K${owedAmount.toLocaleString()}</strong></span>
+                            <span>Due: <strong>K${owedAmount.toLocaleString()}</strong>${modeBadge}</span>
                             <span class="status-${statusKey}">${inv.status}</span>
                             <span class="actions">
                                 <button class="btn btn-sm btn-success" onclick="downloadInvoice('${inv.invoiceNumber}')">📥 PDF</button>
