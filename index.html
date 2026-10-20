@@ -190,6 +190,34 @@
             line-height: 1.4;
         }
         
+        /* ============================================================
+           EDIT MODAL MODE BUTTONS
+           ============================================================ */
+        .edit-mode-btn {
+            padding: 6px 12px;
+            border: 2px solid #cbd5e1;
+            background: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 500;
+            color: #1e293b;
+            transition: all 0.2s;
+            flex: 1 1 auto;
+            min-width: 110px;
+        }
+        .edit-mode-btn:hover {
+            border-color: #002b54;
+            background: #f8fafc;
+        }
+        .edit-mode-btn.active {
+            background: #002b54;
+            color: #fff;
+            border-color: #002b54;
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(0,43,84,0.25);
+        }
+        
         .student-entry {
             background: #f8fafc; border: 1px solid #e2e8f0;
             border-radius: 8px; padding: 15px;
@@ -543,6 +571,7 @@
                     <li>Add students — changing Class reloads the correct names</li>
                     <li>Click <strong>Generate</strong> to create and download the PDF</li>
                     <li>Use <strong>Check Existing Invoices</strong> to see stored modes and manage past invoices</li>
+                    <li>In the <strong>Edit</strong> modal, you can change the mode right there before reissuing</li>
                 </ul>
             </div>
         </div>
@@ -585,19 +614,28 @@
         </div>
     </div>
     
-    <!-- Edit Invoice Modal — REISSUE -->
+    <!-- Edit Invoice Modal — REISSUE with clickable mode selector -->
     <div id="editModal" class="modal-overlay">
         <div class="modal-box">
             <h3 style="color:#002b54;margin-bottom:6px;">✏️ Edit &amp; Reissue Invoice</h3>
             <p style="font-size:13px;color:#64748b;margin-bottom:16px;" id="editInvoiceInfo"></p>
             
             <p style="font-size:11px;color:#1e40af;background:#eff6ff;padding:8px 10px;border-radius:6px;margin-bottom:14px;border-left:3px solid #3b82f6;">
-                💡 <strong>How this works:</strong> Saving will <strong>supersede</strong> the original invoice and generate a <strong>new invoice</strong> with the same students &amp; terms, using the <strong>Balance Display Mode currently selected on the page</strong>. The old invoice stays in the tracker marked <em>SUPERSEDED</em> for audit.
+                💡 <strong>How this works:</strong> Saving will <strong>supersede</strong> the original invoice and generate a <strong>new invoice</strong> with the same students &amp; terms, using the <strong>Balance Display Mode selected below</strong>. The old invoice stays in the tracker marked <em>SUPERSEDED</em> for audit.
             </p>
             
-            <div id="editModeNotice" style="font-size:12px;background:#f1f5f9;padding:10px 12px;border-radius:6px;margin-bottom:14px;border-left:3px solid #002b54;">
-                <strong>Mode that will be used on reissue:</strong><br>
-                <span id="editModeLabel" style="display:inline-block;margin-top:4px;padding:3px 10px;background:#002b54;color:#fff;border-radius:4px;font-weight:600;">—</span>
+            <div id="editModeSection" style="font-size:12px;background:#f1f5f9;padding:12px 14px;border-radius:6px;margin-bottom:14px;border-left:3px solid #002b54;">
+                <strong style="display:block;margin-bottom:8px;color:#002b54;text-transform:uppercase;letter-spacing:0.4px;font-size:11px;">
+                    ⚖️ Balance Mode for this Reissue
+                </strong>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button type="button" class="edit-mode-btn" data-mode="include_both" onclick="setEditModalMode('include_both', this)">✅ Include Both</button>
+                    <button type="button" class="edit-mode-btn" data-mode="ignore_bf" onclick="setEditModalMode('ignore_bf', this)">🚫 Ignore B/F</button>
+                    <button type="button" class="edit-mode-btn" data-mode="ignore_paid" onclick="setEditModalMode('ignore_paid', this)">🚫 Ignore Paid</button>
+                    <button type="button" class="edit-mode-btn" data-mode="ignore_both" onclick="setEditModalMode('ignore_both', this)">🚫 Ignore Both</button>
+                </div>
+                <input type="hidden" id="editModalMode" value="include_both">
+                <div id="editModalModeHint" style="margin-top:8px;font-size:11px;color:#64748b;font-style:italic;line-height:1.4;"></div>
             </div>
             
             <div class="form-row">
@@ -697,6 +735,9 @@
             document.getElementById('studentCount').textContent = '(' + students.length + ' students)';
         }
         
+        // ============================================
+        // PAGE MODE BUTTONS
+        // ============================================
         function setInvoiceMode(mode, btn) {
             currentInvoiceMode = mode;
             document.getElementById('invoiceMode').value = mode;
@@ -714,6 +755,31 @@
                 ignore_both:  'Both previous balances AND current payments will be shown as K0. Only current term fees will appear due.'
             };
             document.getElementById('invoiceModeHint').textContent = hints[mode] || '';
+        }
+        
+        // ============================================
+        // EDIT MODAL MODE BUTTONS
+        // ============================================
+        function setEditModalMode(mode, btn) {
+            document.getElementById('editModalMode').value = mode;
+            
+            var all = document.querySelectorAll('.edit-mode-btn');
+            for (var i = 0; i < all.length; i++) all[i].classList.remove('active');
+            
+            if (btn) {
+                btn.classList.add('active');
+            } else {
+                var match = document.querySelector('.edit-mode-btn[data-mode="' + mode + '"]');
+                if (match) match.classList.add('active');
+            }
+            
+            var hints = {
+                include_both: 'Shows previous balances and payments as recorded.',
+                ignore_bf:    'Previous balances will be shown as K0. Current payments still apply.',
+                ignore_paid:  'Payments already made will be shown as K0. Full fees will appear due.',
+                ignore_both:  'Both previous balances AND current payments will be shown as K0. Only current term fees will appear due.'
+            };
+            document.getElementById('editModalModeHint').textContent = hints[mode] || '';
         }
         
         function updateNetworkStatus() {
@@ -1287,20 +1353,17 @@
             });
         }
         
-        // EDIT MODAL — reissues with currently-selected page mode
+        // ============================================
+        // EDIT MODAL — reissues with the mode selected INSIDE the modal
+        // ============================================
         function openEditModal(invoiceNumber) {
             currentEditInvoiceNumber = invoiceNumber;
             var alertEl = document.getElementById('editAlert');
             alertEl.className = 'alert';
             
-            var activeMode = document.getElementById('invoiceMode').value || 'include_both';
-            var modeLabels = {
-                include_both: '✅ Include Both',
-                ignore_bf:    '🚫 Ignore Previous Balances',
-                ignore_paid:  '🚫 Ignore Current Paid',
-                ignore_both:  '🚫 Ignore Both'
-            };
-            document.getElementById('editModeLabel').textContent = modeLabels[activeMode] || activeMode;
+            // Seed the modal's mode selector from the currently-active page button
+            var activePageMode = document.getElementById('invoiceMode').value || 'include_both';
+            setEditModalMode(activePageMode, null);
             
             document.getElementById('editInvoiceInfo').innerHTML = 
                 'Loading details for <strong>' + invoiceNumber + '</strong>...';
@@ -1315,6 +1378,13 @@
                 }
                 
                 var inv = result.invoice;
+                var modeLabels = {
+                    include_both: '✅ Include Both',
+                    ignore_bf:    '🚫 Ignore Previous Balances',
+                    ignore_paid:  '🚫 Ignore Current Paid',
+                    ignore_both:  '🚫 Ignore Both'
+                };
+                
                 document.getElementById('editInvoiceInfo').innerHTML = 
                     'Invoice <strong>' + inv.invoiceNumber + '</strong><br>' +
                     'Students: ' + (inv.studentList || '') + '<br>' +
@@ -1356,7 +1426,8 @@
                 return;
             }
             
-            var activeMode = document.getElementById('invoiceMode').value || 'include_both';
+            // Mode is taken from the MODAL's selection, not the page button
+            var chosenMode = document.getElementById('editModalMode').value || 'include_both';
             var modeLabels = {
                 include_both: 'Include Both',
                 ignore_bf:    'Ignore Previous Balances',
@@ -1367,7 +1438,7 @@
             var confirmMsg = 'Reissuing will:\n\n' +
                 '• Mark invoice ' + currentEditInvoiceNumber + ' as SUPERSEDED\n' +
                 '• Create a NEW invoice with the updated details\n' +
-                '• Balance Mode: ' + (modeLabels[activeMode] || activeMode) + '\n' +
+                '• Balance Mode: ' + (modeLabels[chosenMode] || chosenMode) + '\n' +
                 '• Download the new PDF\n\n' +
                 'Continue?';
             if (!confirm(confirmMsg)) return;
@@ -1384,7 +1455,7 @@
                 parentPhone: document.getElementById('editParentPhone').value.trim(),
                 parentEmail: document.getElementById('editParentEmail').value.trim(),
                 notes: document.getElementById('editNotes').value.trim(),
-                mode: activeMode,
+                mode: chosenMode,          // ← modal's selection
                 password: password
             }, function(result) {
                 btn.disabled = false;
@@ -1652,6 +1723,7 @@
         window.downloadInvoice = downloadInvoice;
         window.downloadPDF = downloadPDF;
         window.setInvoiceMode = setInvoiceMode;
+        window.setEditModalMode = setEditModalMode;
         
         window.openMarkPaidModal = openMarkPaidModal;
         window.closeMarkPaidModal = closeMarkPaidModal;
