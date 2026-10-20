@@ -138,6 +138,61 @@
             color: #002b54; font-weight: 600;
         }
         
+        /* ============================================================
+           INVOICE MODE BUTTONS
+           ============================================================ */
+        .invoice-mode-group {
+            margin: 12px 0;
+            padding: 12px 14px;
+            background: #f1f5f9;
+            border-left: 4px solid #002b54;
+            border-radius: 6px;
+        }
+        .mode-label {
+            font-weight: 700;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            color: #002b54;
+        }
+        .mode-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .mode-btn {
+            padding: 8px 14px;
+            border: 2px solid #cbd5e1;
+            background: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            color: #1e293b;
+            transition: all 0.2s;
+            flex: 1 1 auto;
+            min-width: 140px;
+        }
+        .mode-btn:hover {
+            border-color: #002b54;
+            background: #f8fafc;
+        }
+        .mode-btn.active {
+            background: #002b54;
+            color: #fff;
+            border-color: #002b54;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,43,84,0.25);
+        }
+        .mode-hint {
+            margin-top: 8px;
+            font-size: 11px;
+            color: #64748b;
+            font-style: italic;
+            line-height: 1.4;
+        }
+        
         .student-entry {
             background: #f8fafc; border: 1px solid #e2e8f0;
             border-radius: 8px; padding: 15px;
@@ -337,6 +392,8 @@
             .progress-bar { width: 220px; }
             .existing-invoices .invoice-item { flex-direction: column; align-items: flex-start; }
             .existing-invoices .invoice-item .actions { width: 100%; }
+            .mode-buttons { flex-direction: column; }
+            .mode-btn { width: 100%; }
         }
     </style>
 </head>
@@ -420,6 +477,32 @@
             
             <div class="divider"></div>
             
+            <!-- Balance Display Mode -->
+            <div>
+                <h3 class="section-title">⚖️ Balance Display Mode</h3>
+                
+                <div class="invoice-mode-group">
+                    <div class="mode-label">Choose how balances and payments appear on the invoice</div>
+                    <div class="mode-buttons">
+                        <button type="button" class="mode-btn active" data-mode="include_both" onclick="setInvoiceMode('include_both', this)">
+                            ✅ Include Both
+                        </button>
+                        <button type="button" class="mode-btn" data-mode="ignore_bf" onclick="setInvoiceMode('ignore_bf', this)">
+                            🚫 Ignore Previous Balances
+                        </button>
+                        <button type="button" class="mode-btn" data-mode="ignore_paid" onclick="setInvoiceMode('ignore_paid', this)">
+                            🚫 Ignore Current Paid
+                        </button>
+                    </div>
+                    <input type="hidden" id="invoiceMode" value="include_both">
+                    <div class="mode-hint" id="invoiceModeHint">
+                        Shows previous balances and payments as recorded.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="divider"></div>
+            
             <!-- Students -->
             <div>
                 <h3 class="section-title">
@@ -464,6 +547,7 @@
                 <ul>
                     <li>Select the <strong>Academic Year</strong> first</li>
                     <li>Choose the <strong>Terms</strong> you want to invoice</li>
+                    <li>Pick a <strong>Balance Display Mode</strong> (default: Include Both)</li>
                     <li>Add students — changing Class reloads the correct names</li>
                     <li>Click <strong>Generate</strong> to create and download the PDF</li>
                     <li>Use <strong>Check Existing Invoices</strong> to manage past invoices</li>
@@ -613,6 +697,9 @@
         let progressIndex = 0;
         let consecutiveFailures = 0;
         
+        // Invoice mode state
+        let currentInvoiceMode = 'include_both';
+        
         // Modal state
         let currentPaidInvoiceNumber = null;
         let currentDeleteInvoiceNumber = null;
@@ -634,6 +721,27 @@
         function updateStudentCount() {
             var students = document.querySelectorAll('.student-entry');
             document.getElementById('studentCount').textContent = '(' + students.length + ' students)';
+        }
+        
+        // ============================================
+        // INVOICE MODE
+        // ============================================
+        function setInvoiceMode(mode, btn) {
+            currentInvoiceMode = mode;
+            document.getElementById('invoiceMode').value = mode;
+            
+            var all = document.querySelectorAll('.mode-btn');
+            for (var i = 0; i < all.length; i++) {
+                all[i].classList.remove('active');
+            }
+            if (btn) btn.classList.add('active');
+            
+            var hints = {
+                include_both: 'Shows previous balances and payments as recorded.',
+                ignore_bf:    'Previous balances will be shown as K0. Current payments still apply.',
+                ignore_paid:  'Payments already made will be shown as K0. Full fees will appear due.'
+            };
+            document.getElementById('invoiceModeHint').textContent = hints[mode] || '';
         }
         
         // ============================================
@@ -1375,6 +1483,7 @@
             var academicYear = document.getElementById('academicYear').value;
             var terms = getSelectedTerms();
             var students = getStudentsData();
+            var mode = document.getElementById('invoiceMode').value || 'include_both';
             
             if (!parentName) { showAlert('Please enter parent name', 'error'); return; }
             if (!academicYear) { showAlert('Please select an academic year', 'error'); return; }
@@ -1423,7 +1532,8 @@
                 parentPhone: parentPhone,
                 parentEmail: parentEmail,
                 terms: termsParam,
-                academicYear: academicYear
+                academicYear: academicYear,
+                mode: mode
             }, function(result) {
                 if (!result.success) {
                     clearTimeout(safetyTimeout);
@@ -1508,6 +1618,9 @@
             loadAcademicYears();
             loadClasses();
             
+            // Initialize mode UI
+            setInvoiceMode('include_both', document.querySelector('.mode-btn[data-mode="include_both"]'));
+            
             setTimeout(function() { addStudent(); }, 500);
             
             document.addEventListener('keypress', function(e) {
@@ -1547,6 +1660,7 @@
         window.generateAndDownload = generateAndDownload;
         window.downloadInvoice = downloadInvoice;
         window.downloadPDF = downloadPDF;
+        window.setInvoiceMode = setInvoiceMode;
         
         window.openMarkPaidModal = openMarkPaidModal;
         window.closeMarkPaidModal = closeMarkPaidModal;
