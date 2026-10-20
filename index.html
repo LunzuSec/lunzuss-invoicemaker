@@ -138,9 +138,6 @@
             color: #002b54; font-weight: 600;
         }
         
-        /* ============================================================
-           INVOICE MODE BUTTONS
-           ============================================================ */
         .invoice-mode-group {
             margin: 12px 0;
             padding: 12px 14px;
@@ -348,7 +345,6 @@
             border-radius: 6px; margin-left: 8px; font-weight: 500;
         }
         
-        /* ============ MODALS ============ */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -417,7 +413,6 @@
         <div class="content">
             <div id="alert" class="alert"></div>
             
-            <!-- Parent Info -->
             <div>
                 <h3 class="section-title">👤 Parent/Guardian Information</h3>
                 <div class="form-row">
@@ -438,7 +433,6 @@
             
             <div class="divider"></div>
             
-            <!-- Academic Year + Terms -->
             <div>
                 <h3 class="section-title">
                     📅 Academic Year &amp; Terms
@@ -477,7 +471,6 @@
             
             <div class="divider"></div>
             
-            <!-- Balance Display Mode -->
             <div>
                 <h3 class="section-title">⚖️ Balance Display Mode</h3>
                 
@@ -506,7 +499,6 @@
             
             <div class="divider"></div>
             
-            <!-- Students -->
             <div>
                 <h3 class="section-title">
                     👨‍🎓 Students 
@@ -527,7 +519,6 @@
             
             <div class="divider"></div>
             
-            <!-- Actions -->
             <div class="btn-group">
                 <button type="button" class="btn btn-primary" onclick="generateAndDownload()" id="generateBtn">
                     📄 Generate Invoice (PDF)
@@ -537,23 +528,21 @@
                 </button>
             </div>
             
-            <!-- Existing Invoices -->
             <div id="existingInvoices" class="existing-invoices">
                 <h4>📋 Existing Invoices</h4>
                 <div id="invoiceList"></div>
             </div>
             
-            <!-- Help -->
             <div class="divider"></div>
             <div class="help-section">
                 <strong>💡 How to Use</strong>
                 <ul>
                     <li>Select the <strong>Academic Year</strong> first</li>
                     <li>Choose the <strong>Terms</strong> you want to invoice</li>
-                    <li>Pick a <strong>Balance Display Mode</strong> — applies to <strong>new invoices only</strong></li>
+                    <li>Pick a <strong>Balance Display Mode</strong> — applies to <strong>new invoices AND reissues</strong></li>
                     <li>Add students — changing Class reloads the correct names</li>
                     <li>Click <strong>Generate</strong> to create and download the PDF</li>
-                    <li>Use <strong>Check Existing Invoices</strong> to see each invoice's stored mode badge</li>
+                    <li>Use <strong>Check Existing Invoices</strong> to see stored modes and manage past invoices</li>
                 </ul>
             </div>
         </div>
@@ -564,7 +553,6 @@
         </div>
     </div>
     
-    <!-- Loading overlay -->
     <div id="loading" class="loading">
         <div class="spinner"></div>
         <div class="loading-text" id="loadingText">Preparing...</div>
@@ -597,20 +585,24 @@
         </div>
     </div>
     
-    <!-- Edit Invoice Modal -->
+    <!-- Edit Invoice Modal — REISSUE -->
     <div id="editModal" class="modal-overlay">
         <div class="modal-box">
-            <h3 style="color:#002b54;margin-bottom:6px;">✏️ Edit Invoice</h3>
+            <h3 style="color:#002b54;margin-bottom:6px;">✏️ Edit &amp; Reissue Invoice</h3>
             <p style="font-size:13px;color:#64748b;margin-bottom:16px;" id="editInvoiceInfo"></p>
             
-            <p style="font-size:11px;color:#92400e;background:#fef3c7;padding:8px 10px;border-radius:6px;margin-bottom:14px;">
-                💡 <strong>Note:</strong> Students, terms, fees, academic year and balance mode cannot be edited here. 
-                To change those, delete this invoice and regenerate.
+            <p style="font-size:11px;color:#1e40af;background:#eff6ff;padding:8px 10px;border-radius:6px;margin-bottom:14px;border-left:3px solid #3b82f6;">
+                💡 <strong>How this works:</strong> Saving will <strong>supersede</strong> the original invoice and generate a <strong>new invoice</strong> with the same students &amp; terms, using the <strong>Balance Display Mode currently selected on the page</strong>. The old invoice stays in the tracker marked <em>SUPERSEDED</em> for audit.
             </p>
+            
+            <div id="editModeNotice" style="font-size:12px;background:#f1f5f9;padding:10px 12px;border-radius:6px;margin-bottom:14px;border-left:3px solid #002b54;">
+                <strong>Mode that will be used on reissue:</strong><br>
+                <span id="editModeLabel" style="display:inline-block;margin-top:4px;padding:3px 10px;background:#002b54;color:#fff;border-radius:4px;font-weight:600;">—</span>
+            </div>
             
             <div class="form-row">
                 <div class="form-group">
-                    <label>Parent/Guardian Name</label>
+                    <label>Parent/Guardian Name <span class="required">*</span></label>
                     <input type="text" id="editParentName">
                 </div>
                 <div class="form-group">
@@ -622,16 +614,6 @@
             <div class="form-group">
                 <label>Parent Email</label>
                 <input type="email" id="editParentEmail">
-            </div>
-            
-            <div class="form-group">
-                <label>Status</label>
-                <select id="editStatus">
-                    <option value="UNPAID">UNPAID</option>
-                    <option value="PARTIALLY PAID">PARTIALLY PAID</option>
-                    <option value="PAID">PAID</option>
-                    <option value="CREDIT">CREDIT</option>
-                </select>
             </div>
             
             <div class="form-group">
@@ -647,7 +629,7 @@
             <div id="editAlert" class="alert"></div>
             
             <div class="btn-group" style="margin-top:20px;">
-                <button class="btn btn-primary" onclick="submitEdit()" id="editSubmitBtn">💾 Save Changes</button>
+                <button class="btn btn-primary" onclick="submitEdit()" id="editSubmitBtn">🔁 Save &amp; Reissue Invoice</button>
                 <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
             </div>
         </div>
@@ -678,14 +660,8 @@
     </div>
     
     <script>
-        // ============================================
-        // CONFIGURATION
-        // ============================================
         const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxFcGYfxd80d2-fDL7FuKglFxsdbrtUz2x685C8Kcs5i1Qmg6_vgIEZMRrY741_-ASIAg/exec';
         
-        // ============================================
-        // STATE
-        // ============================================
         let studentCounter = 0;
         let currentPDFBase64 = null;
         let currentFileName = null;
@@ -700,17 +676,12 @@
         let progressIndex = 0;
         let consecutiveFailures = 0;
         
-        // Invoice mode state
         let currentInvoiceMode = 'include_both';
         
-        // Modal state
         let currentPaidInvoiceNumber = null;
         let currentDeleteInvoiceNumber = null;
         let currentEditInvoiceNumber = null;
         
-        // ============================================
-        // UTILITIES
-        // ============================================
         function showAlert(message, type) {
             var alert = document.getElementById('alert');
             alert.className = 'alert alert-' + type + ' show';
@@ -726,9 +697,6 @@
             document.getElementById('studentCount').textContent = '(' + students.length + ' students)';
         }
         
-        // ============================================
-        // INVOICE MODE
-        // ============================================
         function setInvoiceMode(mode, btn) {
             currentInvoiceMode = mode;
             document.getElementById('invoiceMode').value = mode;
@@ -748,9 +716,6 @@
             document.getElementById('invoiceModeHint').textContent = hints[mode] || '';
         }
         
-        // ============================================
-        // NETWORK MONITORING
-        // ============================================
         function updateNetworkStatus() {
             var dot = document.getElementById('netDot');
             var label = document.getElementById('netLabel');
@@ -781,9 +746,6 @@
             showAlert('⚠️ You are offline. Please reconnect.', 'warn');
         });
         
-        // ============================================
-        // PROGRESS / LOADING
-        // ============================================
         var PROGRESS_STEPS = [
             { text: 'Reading fee sheets...', step: 'STEP 1 OF 4' },
             { text: 'Fetching brought-forward values...', step: 'STEP 2 OF 4' },
@@ -835,9 +797,6 @@
             document.getElementById('progressFill').style.width = '0%';
         }
         
-        // ============================================
-        // JSONP API CALLER
-        // ============================================
         function callApi(action, params, onSuccess, onError, retryCount) {
             retryCount = retryCount || 0;
             var maxRetries = 3;
@@ -905,9 +864,6 @@
             document.body.appendChild(script);
         }
         
-        // ============================================
-        // ACADEMIC YEARS
-        // ============================================
         function loadAcademicYears() {
             callApi('getAcademicYears', {}, function(result) {
                 if (result.success && result.years) {
@@ -928,7 +884,7 @@
                         select.appendChild(opt);
                     }
                 }
-            }, function() { /* silent */ });
+            }, function() {});
         }
         
         function onAcademicYearChange() {
@@ -976,9 +932,6 @@
             preview.textContent = 'B/F from ' + bfSource;
         }
         
-        // ============================================
-        // CLASSES + STUDENTS
-        // ============================================
         function loadClasses() {
             if (classesLoaded && classData.length > 0) {
                 var selects = document.querySelectorAll('.student-class-select');
@@ -1096,9 +1049,6 @@
             }
         }
         
-        // ============================================
-        // STUDENT MANAGEMENT
-        // ============================================
         function addStudent() {
             var container = document.getElementById('studentsContainer');
             var id = ++studentCounter;
@@ -1184,9 +1134,6 @@
             return students;
         }
         
-        // ============================================
-        // CHECK EXISTING INVOICES — shows each invoice's stored mode
-        // ============================================
         function checkExisting() {
             var parentName = document.getElementById('parentName').value.trim();
             if (!parentName) {
@@ -1224,7 +1171,6 @@
                         var balance = inv.totalBalance || 0;
                         var owedAmount = Math.abs(balance);
                         
-                        // Show the stored mode of this specific invoice
                         var storedMode = inv.mode || 'include_both';
                         var modeBadge = '<span style="display:inline-block;font-size:10px;padding:1px 6px;background:#e0e7ff;color:#3730a3;border-radius:3px;margin-left:6px;vertical-align:middle;">' + (modeLabels[storedMode] || storedMode) + '</span>';
                         
@@ -1276,9 +1222,6 @@
             });
         }
         
-        // ============================================
-        // MARK PAID MODAL
-        // ============================================
         function openMarkPaidModal(invoiceNumber, balance) {
             currentPaidInvoiceNumber = invoiceNumber;
             var owedAmount = Math.abs(balance || 0);
@@ -1344,13 +1287,20 @@
             });
         }
         
-        // ============================================
-        // EDIT MODAL
-        // ============================================
+        // EDIT MODAL — reissues with currently-selected page mode
         function openEditModal(invoiceNumber) {
             currentEditInvoiceNumber = invoiceNumber;
             var alertEl = document.getElementById('editAlert');
             alertEl.className = 'alert';
+            
+            var activeMode = document.getElementById('invoiceMode').value || 'include_both';
+            var modeLabels = {
+                include_both: '✅ Include Both',
+                ignore_bf:    '🚫 Ignore Previous Balances',
+                ignore_paid:  '🚫 Ignore Current Paid',
+                ignore_both:  '🚫 Ignore Both'
+            };
+            document.getElementById('editModeLabel').textContent = modeLabels[activeMode] || activeMode;
             
             document.getElementById('editInvoiceInfo').innerHTML = 
                 'Loading details for <strong>' + invoiceNumber + '</strong>...';
@@ -1368,12 +1318,14 @@
                 document.getElementById('editInvoiceInfo').innerHTML = 
                     'Invoice <strong>' + inv.invoiceNumber + '</strong><br>' +
                     'Students: ' + (inv.studentList || '') + '<br>' +
-                    'Academic Year: ' + (inv.academicYear || '');
+                    'Terms: ' + (inv.termsCovered || '') + ' &nbsp;|&nbsp; ' +
+                    'Year: ' + (inv.academicYear || '') + '<br>' +
+                    'Original status: <strong>' + (inv.status || 'UNPAID') + '</strong> &nbsp;|&nbsp; ' +
+                    'Original mode: <strong>' + (modeLabels[inv.mode] || inv.mode || 'include_both') + '</strong>';
                 
                 document.getElementById('editParentName').value = inv.parentName || '';
                 document.getElementById('editParentPhone').value = inv.parentPhone || '';
                 document.getElementById('editParentEmail').value = inv.parentEmail || '';
-                document.getElementById('editStatus').value = inv.status || 'UNPAID';
                 document.getElementById('editNotes').value = inv.notes || '';
                 document.getElementById('editPasswordInput').value = '';
             }, function(error) {
@@ -1391,47 +1343,80 @@
             var alertEl = document.getElementById('editAlert');
             var btn = document.getElementById('editSubmitBtn');
             var password = document.getElementById('editPasswordInput').value;
+            var parentName = document.getElementById('editParentName').value.trim();
             
+            if (!parentName) {
+                alertEl.className = 'alert alert-error show';
+                alertEl.textContent = 'Parent name is required.';
+                return;
+            }
             if (!password) {
                 alertEl.className = 'alert alert-error show';
                 alertEl.textContent = 'Please enter the admin password';
                 return;
             }
             
+            var activeMode = document.getElementById('invoiceMode').value || 'include_both';
+            var modeLabels = {
+                include_both: 'Include Both',
+                ignore_bf:    'Ignore Previous Balances',
+                ignore_paid:  'Ignore Current Paid',
+                ignore_both:  'Ignore Both'
+            };
+            
+            var confirmMsg = 'Reissuing will:\n\n' +
+                '• Mark invoice ' + currentEditInvoiceNumber + ' as SUPERSEDED\n' +
+                '• Create a NEW invoice with the updated details\n' +
+                '• Balance Mode: ' + (modeLabels[activeMode] || activeMode) + '\n' +
+                '• Download the new PDF\n\n' +
+                'Continue?';
+            if (!confirm(confirmMsg)) return;
+            
             btn.disabled = true;
-            btn.innerHTML = '⏳ Saving...';
+            btn.innerHTML = '⏳ Reissuing...';
+            alertEl.className = 'alert';
+            
+            showLoading('Reissuing invoice...');
             
             callApi('editInvoiceMetadata', {
                 invoiceNumber: currentEditInvoiceNumber,
-                parentName: document.getElementById('editParentName').value.trim(),
+                parentName: parentName,
                 parentPhone: document.getElementById('editParentPhone').value.trim(),
                 parentEmail: document.getElementById('editParentEmail').value.trim(),
                 notes: document.getElementById('editNotes').value.trim(),
-                status: document.getElementById('editStatus').value,
+                mode: activeMode,
                 password: password
             }, function(result) {
                 btn.disabled = false;
-                btn.innerHTML = '💾 Save Changes';
+                btn.innerHTML = '🔁 Save & Reissue Invoice';
                 
-                if (result.success) {
-                    closeEditModal();
-                    showAlert(result.message || 'Invoice updated', 'success');
-                    setTimeout(checkExisting, 500);
-                } else {
+                if (!result.success) {
+                    hideLoading();
                     alertEl.className = 'alert alert-error show';
                     alertEl.textContent = result.error || 'Failed';
+                    return;
                 }
+                
+                if (result.pdfBase64) {
+                    currentPDFBase64 = result.pdfBase64;
+                    currentFileName = result.fileName || 'invoice.pdf';
+                    downloadPDF();
+                }
+                
+                hideLoading();
+                closeEditModal();
+                showAlert('✅ ' + (result.message || 'Invoice reissued'), 'success');
+                
+                setTimeout(checkExisting, 500);
             }, function(error) {
+                hideLoading();
                 btn.disabled = false;
-                btn.innerHTML = '💾 Save Changes';
+                btn.innerHTML = '🔁 Save & Reissue Invoice';
                 alertEl.className = 'alert alert-error show';
                 alertEl.textContent = 'Network error: ' + error;
             });
         }
         
-        // ============================================
-        // DELETE MODAL
-        // ============================================
         function confirmDeleteInvoice(invoiceNumber) {
             currentDeleteInvoiceNumber = invoiceNumber;
             
@@ -1487,9 +1472,6 @@
             });
         }
         
-        // ============================================
-        // GENERATE INVOICE
-        // ============================================
         function generateAndDownload() {
             if (isGenerating) return;
             
@@ -1625,16 +1607,12 @@
             }
         }
         
-        // ============================================
-        // INIT
-        // ============================================
         document.addEventListener('DOMContentLoaded', function() {
             updateNetworkStatus();
             updateBFPreview();
             loadAcademicYears();
             loadClasses();
             
-            // Initialize mode UI
             setInvoiceMode('include_both', document.querySelector('.mode-btn[data-mode="include_both"]'));
             
             setTimeout(function() { addStudent(); }, 500);
@@ -1649,7 +1627,6 @@
                 }
             });
             
-            // ESC key closes modals
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     closeMarkPaidModal();
@@ -1658,7 +1635,6 @@
                 }
             });
             
-            // Backdrop click closes modals
             document.addEventListener('click', function(e) {
                 if (e.target.id === 'markPaidModal') closeMarkPaidModal();
                 if (e.target.id === 'deleteConfirmModal') closeDeleteModal();
@@ -1666,7 +1642,6 @@
             });
         });
         
-        // Expose to global
         window.addStudent = addStudent;
         window.removeStudent = removeStudent;
         window.clearAllStudents = clearAllStudents;
