@@ -172,7 +172,7 @@
             color: #1e293b;
             transition: all 0.2s;
             flex: 1 1 auto;
-            min-width: 140px;
+            min-width: 160px;
         }
         .mode-btn:hover {
             border-color: #002b54;
@@ -493,6 +493,9 @@
                         <button type="button" class="mode-btn" data-mode="ignore_paid" onclick="setInvoiceMode('ignore_paid', this)">
                             🚫 Ignore Current Paid
                         </button>
+                        <button type="button" class="mode-btn" data-mode="ignore_both" onclick="setInvoiceMode('ignore_both', this)">
+                            🚫 Ignore Both
+                        </button>
                     </div>
                     <input type="hidden" id="invoiceMode" value="include_both">
                     <div class="mode-hint" id="invoiceModeHint">
@@ -739,7 +742,8 @@
             var hints = {
                 include_both: 'Shows previous balances and payments as recorded.',
                 ignore_bf:    'Previous balances will be shown as K0. Current payments still apply.',
-                ignore_paid:  'Payments already made will be shown as K0. Full fees will appear due.'
+                ignore_paid:  'Payments already made will be shown as K0. Full fees will appear due.',
+                ignore_both:  'Both previous balances AND current payments will be shown as K0. Only current term fees will appear due.'
             };
             document.getElementById('invoiceModeHint').textContent = hints[mode] || '';
         }
